@@ -10,8 +10,15 @@
 			"sources":[
                 {
                     "name":"src",
-                    "type":"exclude",
-                    "exclude_list":[
+                    "type":"include",
+                    "include_list":[
+                        "args.cpp",
+                        "drivers.cpp",
+                        "json.cpp",
+                        "main.cpp",
+                        "project.cpp",
+                        "targets.cpp",
+                        "util.cpp",
                     ],
                 }
 			],

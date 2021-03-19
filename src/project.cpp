@@ -93,20 +93,24 @@ static void gather_sources(std::vector<std::filesystem::path> & out,const std::f
     if(std::filesystem::is_directory(root)){
         for(const Targets::target::source_t &folder:folders){
             std::filesystem::path folder_root(root/folder.name);
-            if(folder.exclude_all){
-                gather_sources(out,folder_root,folder.include_exclude_list);
-            }else{
-                std::vector<std::filesystem::path> folder_folders;
-                std::vector<std::string> exclude(Util::map(folder.include_exclude_list,[](const auto &s)->std::string{return s.name;}));
-                for(const std::filesystem::directory_entry &entry:std::filesystem::directory_iterator(folder_root)){
-                    if(Util::contains(exclude,entry.path().filename().string()))continue;
-                    if(std::filesystem::is_regular_file(entry)){
-                        out.push_back(entry);
-                    }else if(std::filesystem::is_directory(entry)){
-                        folder_folders.push_back(entry);
+            if(std::filesystem::is_directory(folder_root)){
+                if(folder.exclude_all){
+                    gather_sources(out,folder_root,folder.include_exclude_list);
+                }else{
+                    std::vector<std::filesystem::path> folder_folders;
+                    std::vector<std::string> exclude(Util::map(folder.include_exclude_list,[](const auto &s)->std::string{return s.name;}));
+                    for(const std::filesystem::directory_entry &entry:std::filesystem::directory_iterator(folder_root)){
+                        if(Util::contains(exclude,entry.path().filename().string()))continue;
+                        if(std::filesystem::is_regular_file(entry)){
+                            out.push_back(entry);
+                        }else if(std::filesystem::is_directory(entry)){
+                            folder_folders.push_back(entry);
+                        }
                     }
+                    if(!folder_folders.empty())gather_sources(out,root,folder_folders);
                 }
-                if(!folder_folders.empty())gather_sources(out,root,folder_folders);
+            }else if(std::filesystem::is_regular_file(folder_root)){
+                out.push_back(folder_root);
             }
         }
     }else if(std::filesystem::is_regular_file(root)){

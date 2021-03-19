@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="RBuild" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/RBuild" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/RBuild" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<VirtualTargets>
+			<Add alias="all" targets="Debug;Release;" />
+		</VirtualTargets>
+		<Compiler>
+			<Add option="-Wnon-virtual-dtor" />
+			<Add option="-Wshadow" />
+			<Add option="-Winit-self" />
+			<Add option="-Wundef" />
+			<Add option="-Wunreachable-code" />
+			<Add option="-Wmissing-declarations" />
+			<Add option="-Wmain" />
+			<Add option="-Wall" />
+			<Add option="-std=c++20" />
+			<Add option="-m64" />
+			<Add option="-fexceptions" />
+			<Add option="-Werror=return-type" />
+			<Add option="-Wold-style-cast" />
+			<Add option="-Wpessimizing-move" />
+			<Add option="-Wredundant-move" />
+			<Add option="-Werror=suggest-override" />
+			<Add directory="include" />
+		</Compiler>
+		<Linker>
+			<Add option="-m64" />
+		</Linker>
+		<Unit filename="include/args.h" />
+		<Unit filename="include/drivers.h" />
+		<Unit filename="include/json.h" />
+		<Unit filename="include/project.h" />
+		<Unit filename="include/targets.h" />
+		<Unit filename="include/util.h" />
+		<Unit filename="src/args.cpp" />
+		<Unit filename="src/drivers.cpp" />
+		<Unit filename="src/json.cpp" />
+		<Unit filename="src/main.cpp" />
+		<Unit filename="src/project.cpp" />
+		<Unit filename="src/targets.cpp" />
+		<Unit filename="src/util.cpp" />
+		<Extensions />
+	</Project>
+</CodeBlocks_project_file>

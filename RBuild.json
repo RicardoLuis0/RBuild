@@ -11,7 +11,7 @@
                 {
                     "name":"src",
                     "type":"exclude",
-                    "include_list":[
+                    "exclude_list":[
                     ],
                 }
 			],

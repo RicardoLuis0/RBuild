@@ -17,7 +17,7 @@ The format for the json file is specified in [`info/json_layout.txt`](info/json_
 * `-rebuild` rebuild project from scratch, ignore already-built object files
 * `-verbose` print whole command line of executed compilers/linkers
 
-##Using
+## Using
 
 _**TODO**_
 

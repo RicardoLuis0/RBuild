@@ -126,14 +126,14 @@ static std::filesystem::path get_obj_path(const std::filesystem::path &working_p
     }
 }
 
-static ssize_t get_link_order(Targets::target &target,const std::filesystem::path &src_base,const std::filesystem::path &out){//resolving link order is O(n*m) where n is number of objects to link and m is number of objects with specified link order
+static ssize_t get_link_order(Targets::target &target,const std::filesystem::path &out_base,const std::filesystem::path &out){//resolving link order is O(n*m) where n is number of objects to link and m is number of objects with specified link order
     for(const Targets::target::link_order_t &lo_entry:target.linker_order){
         if(lo_entry.type==Targets::target::LINK_NORMAL){
             if(out.filename().string()==lo_entry.name){
                 return lo_entry.weight;
             }
         }else if(lo_entry.type==Targets::target::LINK_NORMAL){
-            if(std::filesystem::relative(out,src_base).string()==lo_entry.name){
+            if(std::filesystem::relative(out,out_base).string()==lo_entry.name){
                 return lo_entry.weight;
             }
         }
@@ -182,6 +182,7 @@ bool Project::build_target(const std::string & target_name) try{
     
     std::filesystem::path src_base=src_path.empty()?std::filesystem::current_path():std::filesystem::path(src_path);
     std::filesystem::path wf_path=std::filesystem::path(working_folder)/arch_folder;
+    std::filesystem::path out_base=wf_path/"obj";
     std::vector<std::filesystem::path> sources_all;
     gather_sources(sources_all,src_base,target.sources);
     
@@ -222,7 +223,7 @@ bool Project::build_target(const std::string & target_name) try{
     for(const auto &c_src:sources_c){
         std::filesystem::path c_src_out(get_obj_path(working_path,src_base,c_src));
         if(!cpp_compiler_driver->needs_compile(working_path,src_base,c_src,c_src_out)||c_compiler_driver->compile(working_path,src_base,c_src,c_src_out,{})){
-            linker_driver->add_file(get_link_order(target,src_base,c_src_out),c_src_out);
+            linker_driver->add_file(get_link_order(target,out_base,c_src_out),c_src_out);
         }else{
             throw std::runtime_error("Failed to compile "+Util::quote_str_single(std::filesystem::relative(c_src).string()));
         }
@@ -231,7 +232,7 @@ bool Project::build_target(const std::string & target_name) try{
     for(const auto &cpp_src:sources_cpp){
         std::filesystem::path cpp_src_out(get_obj_path(working_path,src_base,cpp_src));
         if(!cpp_compiler_driver->needs_compile(working_path,src_base,cpp_src,cpp_src_out)||cpp_compiler_driver->compile(working_path,src_base,cpp_src,cpp_src_out,{})){
-            linker_driver->add_file(get_link_order(target,src_base,cpp_src_out),cpp_src_out);
+            linker_driver->add_file(get_link_order(target,out_base,cpp_src_out),cpp_src_out);
         }else{
             throw std::runtime_error("Failed to compile "+Util::quote_str_single(std::filesystem::relative(cpp_src).string()));
         }
@@ -240,7 +241,7 @@ bool Project::build_target(const std::string & target_name) try{
     for(const auto &asm_src:sources_asm){
         std::filesystem::path asm_src_out(get_obj_path(working_path,src_base,asm_src));
         if(!asm_compiler_driver->needs_compile(working_path,src_base,asm_src,asm_src_out)||asm_compiler_driver->compile(working_path,src_base,asm_src,asm_src_out,{})){
-            linker_driver->add_file(get_link_order(target,src_base,asm_src_out),asm_src_out);
+            linker_driver->add_file(get_link_order(target,out_base,asm_src_out),asm_src_out);
         }else{
             throw std::runtime_error("Failed to compile "+Util::quote_str_single(std::filesystem::relative(asm_src).string()));
         }

@@ -38,7 +38,7 @@ int main(int argc,char ** argv) try {
     Project project(project_json.get_obj(),warnings);
     
     {
-        std::vector<std::string> invalid_args=Util::filter_exclude(Args::unnamed,std::vector<std::string>{"rebuild","file","verbose"});
+        std::vector<std::string> invalid_args=Util::filter_exclude(Util::keys(Args::named),std::vector<std::string>{"rebuild","file","verbose"});
         if(invalid_args.size()>0){
             warnings.push_back("Invalid commandline parameters: "+Util::join(Util::map(invalid_args,&Util::quote_str_single),", "));
         }

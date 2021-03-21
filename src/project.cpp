@@ -151,13 +151,13 @@ bool Project::build_target(const std::string & target_name) try{
                                                                              :compiler_c_cpp?*compiler_c_cpp
                                                                              :compiler_all?*compiler_all
                                                                              :"gcc"
-                                                                             ,drivers::LANG_C,Util::cat(target.flags_all,target.flags_c_cpp,target.flags_c),Util::cat(target.defines_all,target.defines_c,target.defines_c)));
+                                                                             ,drivers::LANG_C,Util::cat(target.flags_all,target.flags_c_cpp,target.flags_c),Util::cat(target.defines_all,target.defines_c_cpp,target.defines_c)));
     
     std::unique_ptr<compiler::driver> cpp_compiler_driver(drivers::get_compiler(compiler_cpp?*compiler_cpp
                                                                                :compiler_c_cpp?*compiler_c_cpp
                                                                                :compiler_all?*compiler_all
                                                                                :"gcc"
-                                                                               ,drivers::LANG_CPP,Util::cat(target.flags_all,target.flags_c_cpp,target.flags_cpp),Util::cat(target.defines_all,target.defines_c,target.defines_cpp)));
+                                                                               ,drivers::LANG_CPP,Util::cat(target.flags_all,target.flags_c_cpp,target.flags_cpp),Util::cat(target.defines_all,target.defines_c_cpp,target.defines_cpp)));
     
     std::unique_ptr<compiler::driver> asm_compiler_driver(drivers::get_compiler(compiler_asm?*compiler_asm
                                                                                :compiler_all?*compiler_all

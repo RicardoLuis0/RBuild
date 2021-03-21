@@ -231,4 +231,27 @@ namespace JSON {
     
     Element parse(const std::string &data);
     
+    
+    inline int number_int_nonopt(const object_t &obj,std::string name) try {
+        return obj.at(name).get_number_int();
+    } catch(JSON_Exception &e) {
+        throw JSON_Exception("In "+Util::quote_str_single(name)+": "+e.msg_top);
+    } catch(std::out_of_range &e){
+        throw JSON_Exception("Missing Numeric Element '"+Util::quote_str_single(name)+"'");
+    }
+    
+    inline std::optional<int> number_int_opt(const object_t &obj,std::string name) try {
+        auto it=obj.find(name);
+        return (it!=obj.end())?it->second.get_number_int():std::optional<int>{std::nullopt};
+    } catch(JSON_Exception &e){
+        throw JSON_Exception("In "+Util::quote_str_single(name)+": "+e.msg_top);
+    }
+    
+    inline int number_int_opt(const object_t &obj,std::string name,int default_opt) try {
+        auto it=obj.find(name);
+        return (it!=obj.end())?it->second.get_number_int():default_opt;
+    } catch(JSON_Exception &e){
+        throw JSON_Exception("In "+Util::quote_str_single(name)+": "+e.msg_top);
+    }
+    
 }

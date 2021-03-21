@@ -6,10 +6,12 @@
     "project_binary": required string,
     "binary_folder_override": optional string,
     "project_ext": optional string default=platform extension,
-    "compiler_c": required string enum "clang" "gcc",
-    "compiler_cpp": required string enum "clang" "gcc",
-    "compiler_asm": required string enum "clang" "gcc" "as" "nasm",
-    "linker": required string enum "clang" "gcc" "ld" "ld.gold" "ld.lld" "ar" "llvm-ar",
+    "compiler_all": optional string enum "clang" "gcc" default="gcc",
+    "compiler_c_cpp": optional string enum "clang" "gcc" default="gcc",
+    "compiler_c": optional string enum "clang" "gcc" default="gcc",
+    "compiler_cpp": optional string enum "clang" "gcc" default="gcc",
+    "compiler_asm": optional string enum "clang" "gcc" "as" "nasm" default="gcc",
+    "linker": required string enum "clang" "gcc" "ld" "ld.gold" "ld.lld" "ar" "llvm-ar" default="gcc",
     "targets_default": optional string | array [ string ] default="all",
     "targets": required object {
         string: required object {
@@ -34,10 +36,11 @@
             "flags_asm": optional array [ string ],
             "linker_flags": optional array [ string ],
             "linker_libs": optional array [ string ],
-            "linker_order_before": optional array [ string ],
-            "linker_extra_before": optional array [ string ],
-            "linker_extra_after": optional array [ string ],
-            "linker_order_after": optional array [ string ],
+            "linker_order": optional array [ object {
+                "name": required string,
+                "weight": required integer,
+                "type": optional enum "normal" "extra" "full_path" default="normal",
+            } ],
             "include_only": optional bool default=false,
         }
     },

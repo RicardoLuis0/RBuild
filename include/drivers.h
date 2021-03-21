@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <filesystem>
 
 namespace drivers {
@@ -62,16 +63,10 @@ namespace drivers {
     
     namespace linker {
         
-        enum class bucket {
-            BEFORE,
-            NORMAL,
-            AFTER,
-        };
-        
         class driver {
         public:
             virtual ~driver()=0;
-            virtual void add_file(bucket,const std::filesystem::path &file)=0;
+            virtual void add_file(ssize_t link_order,const std::filesystem::path &file)=0;
             virtual void clear()=0;
             virtual bool link(const std::filesystem::path &working_path,const std::filesystem::path &file_out,const std::vector<std::string> &extra_flags)=0;
             virtual std::string get_ext()=0;
@@ -82,10 +77,11 @@ namespace drivers {
             std::string linker;
             std::vector<std::string> flags;
             std::vector<std::string> libs;
-            std::vector<std::filesystem::path> link_before,link_extra_before,link_normal,link_extra_after,link_after;
+            std::map<ssize_t,std::vector<std::filesystem::path>> link_files;
+            std::vector<std::string> join_link_files();
         public:
-            base(const std::string &linker,const std::vector<std::string> &flags,const std::vector<std::string> &libs,const std::vector<std::filesystem::path> &link_extra_before,const std::vector<std::filesystem::path> &link_extra_after);
-            virtual void add_file(bucket,const std::filesystem::path &file) override;
+            base(const std::string &linker,const std::vector<std::string> &flags,const std::vector<std::string> &libs);
+            virtual void add_file(ssize_t link_order,const std::filesystem::path &file) override;
             virtual void clear() override;
             virtual bool link(const std::filesystem::path &working_path,const std::filesystem::path &file_out,const std::vector<std::string> &extra_flags) override;
             virtual std::string get_ext() override;
@@ -101,8 +97,8 @@ namespace drivers {
                 bool cpp=false;
                 std::string linker_cpp;
             public:
-                gnu(const std::string &linker_c,const std::string &linker_cpp,const std::vector<std::string> &flags,const std::vector<std::string> &libs,const std::vector<std::filesystem::path> &link_extra_before,const std::vector<std::filesystem::path> &link_extra_after);
-                virtual void add_file(bucket,const std::filesystem::path &file) override;
+                gnu(const std::string &linker_c,const std::string &linker_cpp,const std::vector<std::string> &flags,const std::vector<std::string> &libs);
+                virtual void add_file(ssize_t link_order,const std::filesystem::path &file) override;
         };
         
         class ar final : public base {
@@ -121,6 +117,6 @@ namespace drivers {
     
     std::unique_ptr<compiler::driver> get_compiler(const std::string &name,compiler_lang lang,const std::vector<std::string> &flags,const std::vector<std::string> &defines);
     
-    std::unique_ptr<linker::driver> get_linker(const std::string &name,const std::vector<std::string> &flags,const std::vector<std::string> &libs,const std::vector<std::filesystem::path> &link_extra_before,const std::vector<std::filesystem::path> &link_extra_after);
+    std::unique_ptr<linker::driver> get_linker(const std::string &name,const std::vector<std::string> &flags,const std::vector<std::string> &libs);
     
 }

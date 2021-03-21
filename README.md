@@ -7,13 +7,19 @@ It is built to be as simple as viable, and as such it doesn't handle:
 * Pre/Post build steps
 * etc
 
-It does, however, support:
-* Specifying link order to a certain degree
+It does support:
+* Specifying link order
+* Specifying sources either per-file or per-folder ( as white/blacklist )
+* Multiple targets (be them debug/release/etc)
 
 The format for the json file is specified in [`info/json_layout.txt`](info/json_layout.txt), and the commandline arguments the program accepts are:
 * `-file=[json file]` to specify which file it uses as the project file, if no file is specified it uses "[current folder name].json"
 * `-rebuild` rebuild project from scratch, ignore already-built object files
 * `-verbose` print whole command line of executed compilers/linkers
+
+##Using
+
+_**TODO**_
 
 ## Building
 

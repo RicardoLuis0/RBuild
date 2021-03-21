@@ -126,16 +126,19 @@ static std::filesystem::path get_obj_path(const std::filesystem::path &working_p
     }
 }
 
-static drivers::linker::bucket get_linker_bucket(Targets::target &target,std::filesystem::path out){
-    using namespace drivers::linker;
-    //std::cout<<"filename="<<out.filename()<<"\n";
-    if(Util::contains(target.linker_link_order_before,out.filename().string())){
-        return bucket::BEFORE;
-    }else if(Util::contains(target.linker_link_order_after,out.filename().string())){
-        return bucket::AFTER;
-    }else{
-        return bucket::NORMAL;
+static ssize_t get_link_order(Targets::target &target,const std::filesystem::path &src_base,const std::filesystem::path &out){//resolving link order is O(n*m) where n is number of objects to link and m is number of objects with specified link order
+    for(const Targets::target::link_order_t &lo_entry:target.linker_order){
+        if(lo_entry.type==Targets::target::LINK_NORMAL){
+            if(out.filename().string()==lo_entry.name){
+                return lo_entry.weight;
+            }
+        }else if(lo_entry.type==Targets::target::LINK_NORMAL){
+            if(std::filesystem::relative(out,src_base).string()==lo_entry.name){
+                return lo_entry.weight;
+            }
+        }
     }
+    return 0;
 }
 
 bool Project::build_target(const std::string & target_name) try{
@@ -163,7 +166,7 @@ bool Project::build_target(const std::string & target_name) try{
     
     std::unique_ptr<linker::driver> linker_driver(drivers::get_linker(linker?*linker
                                                  :"gcc"
-                                                 ,target.linker_flags,target.linker_libs,Util::map_construct<std::filesystem::path>(target.linker_link_extra_before),Util::map_construct<std::filesystem::path>(target.linker_link_extra_after)));
+                                                 ,target.linker_flags,target.linker_libs));
     
     
     std::string arch_folder(noarch?"":
@@ -210,10 +213,16 @@ bool Project::build_target(const std::string & target_name) try{
     
     std::filesystem::path working_path(wf_path/target_name);
     
+    for(const Targets::target::link_order_t &lo_entry:target.linker_order){
+        if(lo_entry.type==Targets::target::LINK_EXTRA){
+            linker_driver->add_file(lo_entry.weight,lo_entry.name);
+        }
+    }
+    
     for(const auto &c_src:sources_c){
         std::filesystem::path c_src_out(get_obj_path(working_path,src_base,c_src));
         if(!cpp_compiler_driver->needs_compile(working_path,src_base,c_src,c_src_out)||c_compiler_driver->compile(working_path,src_base,c_src,c_src_out,{})){
-            linker_driver->add_file(get_linker_bucket(target,c_src_out),c_src_out);
+            linker_driver->add_file(get_link_order(target,src_base,c_src_out),c_src_out);
         }else{
             throw std::runtime_error("Failed to compile "+Util::quote_str_single(std::filesystem::relative(c_src).string()));
         }
@@ -222,7 +231,7 @@ bool Project::build_target(const std::string & target_name) try{
     for(const auto &cpp_src:sources_cpp){
         std::filesystem::path cpp_src_out(get_obj_path(working_path,src_base,cpp_src));
         if(!cpp_compiler_driver->needs_compile(working_path,src_base,cpp_src,cpp_src_out)||cpp_compiler_driver->compile(working_path,src_base,cpp_src,cpp_src_out,{})){
-            linker_driver->add_file(get_linker_bucket(target,cpp_src_out),cpp_src_out);
+            linker_driver->add_file(get_link_order(target,src_base,cpp_src_out),cpp_src_out);
         }else{
             throw std::runtime_error("Failed to compile "+Util::quote_str_single(std::filesystem::relative(cpp_src).string()));
         }
@@ -231,7 +240,7 @@ bool Project::build_target(const std::string & target_name) try{
     for(const auto &asm_src:sources_asm){
         std::filesystem::path asm_src_out(get_obj_path(working_path,src_base,asm_src));
         if(!asm_compiler_driver->needs_compile(working_path,src_base,asm_src,asm_src_out)||asm_compiler_driver->compile(working_path,src_base,asm_src,asm_src_out,{})){
-            linker_driver->add_file(get_linker_bucket(target,asm_src_out),asm_src_out);
+            linker_driver->add_file(get_link_order(target,src_base,asm_src_out),asm_src_out);
         }else{
             throw std::runtime_error("Failed to compile "+Util::quote_str_single(std::filesystem::relative(asm_src).string()));
         }

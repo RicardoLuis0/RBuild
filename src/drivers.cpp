@@ -120,36 +120,33 @@ namespace drivers {
             
         }
         
-        base::base(const std::string &lnk,const std::vector<std::string> &fs,const std::vector<std::string> &ls,const std::vector<std::filesystem::path> &leb,const std::vector<std::filesystem::path> &lea):linker(lnk),flags(fs),libs(ls),link_extra_before(leb),link_extra_after(lea){
+        base::base(const std::string &lnk,const std::vector<std::string> &fs,const std::vector<std::string> &ls):linker(lnk),flags(fs),libs(ls){
             
         }
         
-        void base::add_file(bucket b,const path &file){
-            (b==bucket::BEFORE      ?   link_before
-            :b==bucket::NORMAL      ?   link_normal
-            :b==bucket::AFTER       ?   link_after
-            :throw std::runtime_error("Invalid linker file bucket")).push_back(file);
+        void base::add_file(ssize_t link_order,const path &file){
+            link_files[link_order].push_back(file);
         }
         
         void base::clear() {
-            link_before.clear();
-            link_extra_before.clear();
-            link_normal.clear();
-            link_extra_after.clear();
-            link_after.clear();
+            link_files.clear();
+        }
+        std::vector<std::string> base::join_link_files(){
+            std::vector<std::string> out;
+            for(auto &vp:link_files){
+                out.reserve(out.size()+vp.second.size());
+                for(auto &e:vp.second){
+                    out.push_back(e.string());
+                }
+            }
+            return out;
         }
         
         bool base::link(const path &working_path,const path &file_out,const std::vector<std::string> &extra_flags){
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
             if(silent)std::cout<<"linking\n";
-            return Util::run(linker,Util::cat(std::vector<std::string>{"-o",file_out.string()},libs,flags,extra_flags,
-                                              Util::map(Util::cat(
-                                                                  link_before,link_extra_before,link_normal,link_extra_after,link_after
-                                                                 ),
-                                                        [](const path&p){return p.string();}
-                                                       )
-                                             ),nullptr,silent)==0;
+            return Util::run(linker,Util::cat(std::vector<std::string>{"-o",file_out.string()},libs,flags,extra_flags,join_link_files()),nullptr,silent)==0;
         }
         
         std::string base::get_ext(){
@@ -167,25 +164,19 @@ namespace drivers {
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
             if(silent)std::cout<<"linking\n";
-            return Util::run(linker,Util::cat(std::vector<std::string>{"-o",file_out.string()},libs,flags,extra_flags,
-                                              Util::map(Util::cat(
-                                                                  link_before,link_extra_before,link_normal,link_extra_after,link_after
-                                                                 ),
-                                                        [](const path&p){return p.string();}
-                                                       )
-                                             ),&Util::alternate_cmdline_args_to_file_regular,silent)==0;
+            return Util::run(linker,Util::cat(std::vector<std::string>{"-o",file_out.string()},libs,flags,extra_flags,join_link_files()),&Util::alternate_cmdline_args_to_file_regular,silent)==0;
         }
         
-        gnu::gnu(const std::string &lnk,const std::string &lnk_cpp,const std::vector<std::string> &fs,const std::vector<std::string> &ls,const std::vector<std::filesystem::path> &leb,const std::vector<std::filesystem::path> &lea) : generic(lnk,fs,ls,leb,lea),linker_cpp(lnk_cpp) {
+        gnu::gnu(const std::string &lnk,const std::string &lnk_cpp,const std::vector<std::string> &fs,const std::vector<std::string> &ls) : generic(lnk,fs,ls),linker_cpp(lnk_cpp) {
             
         }
         
-        void gnu::add_file(bucket b,const path &f){
+        void gnu::add_file(ssize_t link_order,const path &f){
             if(!cpp&&f.filename().string().ends_with(".cpp.o")){
                 cpp=true;
                 linker=linker_cpp;
             }
-            generic::add_file(b,f);
+            generic::add_file(link_order,f);
         }
         
         std::string ar::get_ext(){
@@ -196,13 +187,7 @@ namespace drivers {
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
             if(silent)std::cout<<"linking\n";
-            return Util::run(linker,Util::cat(flags,std::vector<std::string>{file_out.string()},libs,extra_flags,
-                                              Util::map(Util::cat(
-                                                                  link_before,link_extra_before,link_normal,link_extra_after,link_after
-                                                                 ),
-                                                        [](const path&p){return p.string();}
-                                                       )
-                                             ),&Util::alternate_cmdline_args_to_file_regular,silent)==0;
+            return Util::run(linker,Util::cat(flags,std::vector<std::string>{file_out.string()},libs,extra_flags,join_link_files()),&Util::alternate_cmdline_args_to_file_regular,silent)==0;
         }
         
     }
@@ -237,15 +222,15 @@ namespace drivers {
         __builtin_unreachable();
     }
     
-    std::unique_ptr<linker::driver> get_linker(const std::string &name,const std::vector<std::string> &flags,const std::vector<std::string> &libs,const std::vector<std::filesystem::path> &link_extra_before,const std::vector<std::filesystem::path> &link_extra_after){
+    std::unique_ptr<linker::driver> get_linker(const std::string &name,const std::vector<std::string> &flags,const std::vector<std::string> &libs){
         if(name=="gcc"){
-            return std::make_unique<linker::gnu>("gcc","g++",flags,libs,link_extra_before,link_extra_after);
+            return std::make_unique<linker::gnu>("gcc","g++",flags,libs);
         }else if(name=="clang"){
-            return std::make_unique<linker::gnu>("clang","clang++",flags,libs,link_extra_before,link_extra_after);
+            return std::make_unique<linker::gnu>("clang","clang++",flags,libs);
         }else if(Util::contains(std::vector<std::string>{"ld","ld.gold","ld.lld"},name)){
-            return std::make_unique<linker::generic>(name,flags,libs,link_extra_before,link_extra_after);
+            return std::make_unique<linker::generic>(name,flags,libs);
         }else if(Util::contains(std::vector<std::string>{"ar","llvm-ar"},name)){
-            return std::make_unique<linker::ar>(name,flags,libs,link_extra_before,link_extra_after);
+            return std::make_unique<linker::ar>(name,flags,libs);
         }else{
             throw std::runtime_error("unknown linker "+Util::quote_str_single(name));
         }

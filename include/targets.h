@@ -11,10 +11,29 @@ class Targets {
 public:
     struct target {
         
+        enum link_order_type_t {
+            LINK_NORMAL,
+            LINK_FULL_PATH,
+            LINK_EXTRA,
+        };
+        
         struct source_t {
+            source_t()=default;
+            inline source_t(const std::string &s):name(s){
+            }
+            inline source_t(const std::string &s,const std::vector<source_t> &sv,bool b):name(s),include_exclude_list(sv),exclude_all(b){
+            }
+            inline source_t(const std::string &s,std::vector<source_t> && sv,bool b):name(s),include_exclude_list(std::move(sv)),exclude_all(b){
+            }
             std::string name;
             std::vector<source_t> include_exclude_list;
-            bool exclude_all;
+            bool exclude_all=false;
+        };
+        
+        struct link_order_t {
+            std::string name;
+            ssize_t weight;
+            link_order_type_t type;
         };
         
         target(const JSON::object_t &target,std::string name,std::vector<std::string> &warnings_out);
@@ -39,13 +58,10 @@ public:
         
         std::vector<std::string> linker_flags;
         std::vector<std::string> linker_libs;
-        std::vector<std::string> linker_link_order_before;
-        std::vector<std::string> linker_link_extra_before;
-        std::vector<std::string> linker_link_extra_after;
-        std::vector<std::string> linker_link_order_after;
-        std::vector<std::string> linker_nolink;
         
-        bool nocompile;
+        std::vector<link_order_t> linker_order;
+        
+        bool include_only;
         
     };
     

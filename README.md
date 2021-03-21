@@ -108,8 +108,9 @@ This project doesn't have any dependencies other than a recent-enough version of
 * run `RBuild` on the project folder, if the project is in a folder named `RBuild`, or `RBuild -file=RBuild.json` if the project is in a different folder
 * optinally run `install.sh` to add it to your path
 ### Windows
+Requires MinGW
 #### Option 1 (batch file)
-* run `build.bat` to build it (requires MinGW's `g++` to be on your path)
+* run `build.bat` to build it
 * optionally manually add it to your path
 #### Option 2 (codeblocks)
 * open the `RBuild.cbp` project file in codeblocks, and compile it

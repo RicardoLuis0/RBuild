@@ -45,7 +45,7 @@
                 "common"
             ],
             "defines_c_cpp":[
-                "-DNDEBUG"
+                "NDEBUG"
             ],
             "flags_c_cpp":[
                 "-O2"
@@ -59,7 +59,7 @@
                 "common"
             ],
             "defines_c_cpp":[
-                "-DDEBUG"
+                "DEBUG"
             ],
             "flags_c_cpp":[
                 "-g"

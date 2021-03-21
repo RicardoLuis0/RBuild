@@ -13,7 +13,7 @@ namespace drivers {
             
         }
         
-        base::base(const std::string &cmp,const std::vector<std::string> &fs,const std::vector<std::string> &ds):compiler(cmp),flags(fs){
+        base::base(const std::string &cmp,const std::vector<std::string> &fs,const std::vector<std::string> &ds):compiler(cmp),flags(fs),defines(ds){
             
         }
         

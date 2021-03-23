@@ -18,9 +18,9 @@
             "sources": required  array [
                 string | object {
                     "name": required string,
-                    "mode": enum string "exclude" "include",
-                    "exclude_list": if mode is "exclude" optional array [ string ],
-                    "include_list": if mode is "include" optional array [ string | object self ],
+                    "type": enum string "exclude" "include",
+                    "exclude_list": if type is "exclude" optional array [ string ],
+                    "include_list": if type is "include" optional array [ string | object self ],
                 }
             ],
             "includes": optional array [ string ],

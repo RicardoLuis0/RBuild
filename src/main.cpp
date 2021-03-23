@@ -40,7 +40,7 @@ int main(int argc,char ** argv) try {
     {
         std::vector<std::string> invalid_args=Util::filter_exclude(Util::keys(Args::named),std::vector<std::string>{"rebuild","file","verbose"});
         if(invalid_args.size()>0){
-            warnings.push_back("Invalid commandline parameters: "+Util::join(Util::map(invalid_args,&Util::quote_str_single),", "));
+            warnings.push_back("Invalid commandline "+((invalid_args.size()==1?"parameter ":"parameters: ")+Util::join(Util::map(invalid_args,&Util::quote_str_single),", ")));
         }
     }
     

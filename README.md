@@ -87,7 +87,12 @@ The `linker_flags` property speficies the flags to be passed to the linker, each
 
 The `linker_libs` property speficies the libraries to be passed to the linker, will be passed as-is, like `linker_flags`.
 
-The `linker_order` property specifies exceptions to the default linking order, positive weights means it will be linked after all other files, and negative weights means it will be linked before all other files. It has 3 types: `normal` (the default) will try to match only the filename of the object file, `full_path`, will try to match the full path (ex. if you want to link `src/foo/foo.cpp` before all else you'd write `foo.cpp.o` as the name if `normal`, and `src/foo/foo.cpp.o` if `full_path`), and `extra` which just appends the path to the object file list.
+The `linker_order` property specifies exceptions to the default linking order, positive weights means it will be linked after all other files, and negative weights means it will be linked before all other files.
+
+It has 3 types:
+* `normal` (the default) will try to match only the filename of the object file;
+* `full_path` will try to match the full path (ex. if you want to link `src/foo/foo.cpp` before all else you'd write `foo.cpp.o` as the name if `normal`, and `src/foo/foo.cpp.o` if `full_path`)
+* `extra` just appends the specified file path to the object file list.
 
 #### Misc Target Properties
 

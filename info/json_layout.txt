@@ -41,6 +41,8 @@
                 "weight": required integer,
                 "type": optional enum "normal" "extra" "full_path" default="normal",
             } ],
+            "binary_folder_override": optional string,
+            "project_binary_override": optional string,
             "include_only": optional bool default=false,
         }
     },

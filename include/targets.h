@@ -61,6 +61,9 @@ public:
         
         std::vector<link_order_t> linker_order;
         
+        std::optional<std::string> binary_folder_override;
+        std::optional<std::string> project_binary_override;
+        
         bool include_only;
         
     };

@@ -35,7 +35,10 @@ Project::Project(const JSON::object_t &project,std::vector<std::string> &warning
             std::vector<std::string> invalid_targets;
             std::tie(default_targets,invalid_targets)=Util::filter_inout(default_targets,Util::keys(targets.targets));
             if(invalid_targets.size()>0){
-                warnings_out.push_back("Invalid "+std::string(invalid_targets.size()==1?"Target":"Targets")+" in 'targets_default': "+Util::join(Util::map(invalid_targets,&Util::quote_str_single),", "));
+                warnings_out.push_back("Invalid "+
+                                       std::string(invalid_targets.size()==1?"Target":"Targets")+
+                                       " in 'targets_default': "+
+                                       Util::join(Util::map(invalid_targets,&Util::quote_str_single),", "));
             }
         }else{
             throw JSON::JSON_Exception("In 'targets_default': ",std::vector<std::string>{"String","Array"},it->second.type_name());
@@ -126,7 +129,8 @@ static std::filesystem::path get_obj_path(const std::filesystem::path &working_p
     }
 }
 
-static ssize_t get_link_order(Targets::target &target,const std::filesystem::path &out_base,const std::filesystem::path &out){//resolving link order is O(n*m) where n is number of objects to link and m is number of objects with specified link order
+//resolving link order is O(n*m) where n is number of objects to link and m is number of objects with specified link order
+static ssize_t get_link_order(Targets::target &target,const std::filesystem::path &out_base,const std::filesystem::path &out){
     for(const Targets::target::link_order_t &lo_entry:target.linker_order){
         if(lo_entry.type==Targets::target::LINK_NORMAL){
             if(out.filename().string()==lo_entry.name){
@@ -142,6 +146,7 @@ static ssize_t get_link_order(Targets::target &target,const std::filesystem::pat
 }
 
 bool Project::build_target(const std::string & target_name) try{
+    using std::filesystem::path;
     
     auto &target=targets.targets.at(target_name);
     
@@ -150,19 +155,25 @@ bool Project::build_target(const std::string & target_name) try{
     std::unique_ptr<compiler::driver> c_compiler_driver(drivers::get_compiler(compiler_c?*compiler_c
                                                                              :compiler_c_cpp?*compiler_c_cpp
                                                                              :compiler_all?*compiler_all
-                                                                             :"gcc"
-                                                                             ,drivers::LANG_C,Util::cat(target.flags_all,target.flags_c_cpp,target.flags_c),Util::cat(target.defines_all,target.defines_c_cpp,target.defines_c)));
+                                                                             :"gcc",
+                                                                             drivers::LANG_C,
+                                                                             Util::cat(target.flags_all,target.flags_c_cpp,target.flags_c),
+                                                                             Util::cat(target.defines_all,target.defines_c_cpp,target.defines_c)));
     
     std::unique_ptr<compiler::driver> cpp_compiler_driver(drivers::get_compiler(compiler_cpp?*compiler_cpp
                                                                                :compiler_c_cpp?*compiler_c_cpp
                                                                                :compiler_all?*compiler_all
-                                                                               :"gcc"
-                                                                               ,drivers::LANG_CPP,Util::cat(target.flags_all,target.flags_c_cpp,target.flags_cpp),Util::cat(target.defines_all,target.defines_c_cpp,target.defines_cpp)));
+                                                                               :"gcc",
+                                                                               drivers::LANG_CPP,
+                                                                               Util::cat(target.flags_all,target.flags_c_cpp,target.flags_cpp),
+                                                                               Util::cat(target.defines_all,target.defines_c_cpp,target.defines_cpp)));
     
     std::unique_ptr<compiler::driver> asm_compiler_driver(drivers::get_compiler(compiler_asm?*compiler_asm
                                                                                :compiler_all?*compiler_all
-                                                                               :"gcc"
-                                                                               ,drivers::LANG_ASM,Util::cat(target.flags_all,target.flags_asm),Util::cat(target.defines_all,target.defines_asm)));
+                                                                               :"gcc",
+                                                                               drivers::LANG_ASM,
+                                                                               Util::cat(target.flags_all,target.flags_asm),
+                                                                               Util::cat(target.defines_all,target.defines_asm)));
     
     std::unique_ptr<linker::driver> linker_driver(drivers::get_linker(linker?*linker
                                                  :"gcc"
@@ -180,10 +191,10 @@ bool Project::build_target(const std::string & target_name) try{
     #endif // defined
     );
     
-    std::filesystem::path src_base=src_path.empty()?std::filesystem::current_path():std::filesystem::path(src_path);
-    std::filesystem::path wf_path=std::filesystem::path(working_folder)/arch_folder;
-    std::filesystem::path out_base=wf_path/"obj";
-    std::vector<std::filesystem::path> sources_all;
+    path src_base=src_path.empty()?std::filesystem::current_path():path(src_path);
+    path wf_path=path(working_folder)/arch_folder;
+    path out_base=wf_path/"obj";
+    std::vector<path> sources_all;
     gather_sources(sources_all,src_base,target.sources);
     
     static const std::string c_extensions[]{
@@ -207,12 +218,12 @@ bool Project::build_target(const std::string & target_name) try{
     };
     
     #define FILTER_EXTENSIONS(exts) Util::filter_if(sources_all,[](const auto &p){return Util::contains(Util::CArrayIteratorAdaptor(exts),p.extension().string());})
-        std::vector<std::filesystem::path> sources_c(FILTER_EXTENSIONS(c_extensions));
-        std::vector<std::filesystem::path> sources_cpp(FILTER_EXTENSIONS(cpp_extensions));
-        std::vector<std::filesystem::path> sources_asm(FILTER_EXTENSIONS(asm_extensions));
+        std::vector<path> sources_c(FILTER_EXTENSIONS(c_extensions));
+        std::vector<path> sources_cpp(FILTER_EXTENSIONS(cpp_extensions));
+        std::vector<path> sources_asm(FILTER_EXTENSIONS(asm_extensions));
     #undef FILTER_EXTENSIONS
     
-    std::filesystem::path working_path(wf_path/target_name);
+    path working_path(wf_path/target_name);
     
     for(const Targets::target::link_order_t &lo_entry:target.linker_order){
         if(lo_entry.type==Targets::target::LINK_EXTRA){
@@ -221,7 +232,7 @@ bool Project::build_target(const std::string & target_name) try{
     }
     
     for(const auto &c_src:sources_c){
-        std::filesystem::path c_src_out(get_obj_path(working_path,src_base,c_src));
+        path c_src_out(get_obj_path(working_path,src_base,c_src));
         if(!cpp_compiler_driver->needs_compile(working_path,src_base,c_src,c_src_out)||c_compiler_driver->compile(working_path,src_base,c_src,c_src_out,{})){
             linker_driver->add_file(get_link_order(target,out_base,c_src_out),c_src_out);
         }else{
@@ -230,7 +241,7 @@ bool Project::build_target(const std::string & target_name) try{
     }
     
     for(const auto &cpp_src:sources_cpp){
-        std::filesystem::path cpp_src_out(get_obj_path(working_path,src_base,cpp_src));
+        path cpp_src_out(get_obj_path(working_path,src_base,cpp_src));
         if(!cpp_compiler_driver->needs_compile(working_path,src_base,cpp_src,cpp_src_out)||cpp_compiler_driver->compile(working_path,src_base,cpp_src,cpp_src_out,{})){
             linker_driver->add_file(get_link_order(target,out_base,cpp_src_out),cpp_src_out);
         }else{
@@ -239,7 +250,7 @@ bool Project::build_target(const std::string & target_name) try{
     }
     
     for(const auto &asm_src:sources_asm){
-        std::filesystem::path asm_src_out(get_obj_path(working_path,src_base,asm_src));
+        path asm_src_out(get_obj_path(working_path,src_base,asm_src));
         if(!asm_compiler_driver->needs_compile(working_path,src_base,asm_src,asm_src_out)||asm_compiler_driver->compile(working_path,src_base,asm_src,asm_src_out,{})){
             linker_driver->add_file(get_link_order(target,out_base,asm_src_out),asm_src_out);
         }else{
@@ -247,7 +258,15 @@ bool Project::build_target(const std::string & target_name) try{
         }
     }
     
-    std::string out=((binary_folder_override?std::filesystem::path(*binary_folder_override):working_path/"bin")/(project_binary+(project_ext?*project_ext:linker_driver->get_ext()))).string();
+    std::string out=(
+                     (target.binary_folder_override?path(*target.binary_folder_override):(binary_folder_override?path(*binary_folder_override):(working_path/"bin")))
+                     /
+                     (
+                      (target.project_binary_override?*target.project_binary_override:project_binary)
+                      +
+                      (project_ext?*project_ext:linker_driver->get_ext())
+                     )
+                    ).string();
     
     if(!linker_driver->link(working_path,out,{})){
         throw std::runtime_error("Failed to link");

@@ -96,7 +96,9 @@ It has 3 types:
 
 #### Misc Target Properties
 
-`include_only`: will not allow the target to be compiled by itself, only included by other targets
+`include_only`: will not allow the target to be compiled by itself, only included by other targets  
+`binary_folder_override`: override output folder for binary (from `working_folder\arch\target\bin`) to this for target  
+`project_binary_override`: override `project_binary` property for the target
 
 ## Building
 

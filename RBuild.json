@@ -1,3 +1,4 @@
+#!/usr/bin/env RBuild
 {
     "working_folder":"build/",
     "src_folder":"",

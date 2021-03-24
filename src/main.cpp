@@ -32,8 +32,14 @@ static bool show_warnings(const std::vector<std::string> &warnings){
 
 int main(int argc,char ** argv) try {
     Args::init(argc,argv);
-    
+    if(Args::unnamed.size()>0&&Args::unnamed[0].ends_with(".json")){
+        if(!Args::named.contains("file")){
+            Args::named.insert({"file",{Args::NamedArgType::VALUE,Args::unnamed[0]}});
+        }
+        Args::unnamed.erase(Args::unnamed.begin());
+    }
     std::vector<std::string> warnings;
+    
     std::string project_file=Args::namedArgOr("file",std::filesystem::current_path().filename().string()+".json");
     
     auto project_json=JSON::parse(Util::readfile(project_file));

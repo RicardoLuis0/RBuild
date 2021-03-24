@@ -7,6 +7,8 @@
 
 #include "args.h"
 
+#include <cstdlib>
+
 static bool show_warnings(const std::vector<std::string> &warnings){
     if(warnings.size()>0){
         for(auto &warning:warnings){
@@ -49,18 +51,19 @@ int main(int argc,char ** argv) try {
     std::vector<std::string> valid_targets;
     
     if(Args::unnamed.size()==1&&Args::unnamed[0]=="list"){
-        if(show_warnings(warnings)){
-            std::cout<<"targets: "<<Util::join(Util::map(possible_targets,&Util::quote_str_single),", ")<<"\n";
+        if(!show_warnings(warnings)){
+            return EXIT_FAILURE;
         }
-        return 0;
+        std::cout<<"targets: "<<Util::join(Util::map(possible_targets,&Util::quote_str_single),", ")<<"\n";
+        return EXIT_SUCCESS;
     }else if(Args::unnamed.size()==1&&Args::unnamed[0]=="all"){
         if(!show_warnings(warnings)){
-            return 0;
+            return EXIT_FAILURE;
         }
         valid_targets=possible_targets;
     }else if(Args::unnamed.size()==0){
         if(!show_warnings(warnings)){
-            return 0;
+            return EXIT_FAILURE;
         }
         valid_targets=project.default_targets;
     }else{
@@ -71,10 +74,10 @@ int main(int argc,char ** argv) try {
             warnings.push_back("Asking for Invalid "+std::string(invalid_targets.size()==1?"Target ":"Targets: ")+Util::join(Util::map(invalid_targets,&Util::quote_str_single),", "));
         }
         if(!show_warnings(warnings)){
-            return 0;
+            return EXIT_FAILURE;
         }
     }
-    
+    bool fail=false;
     if(valid_targets.size()==0){
         std::cout<<"----------------\nNo Targets\n----------------\n";
     }else{
@@ -85,15 +88,16 @@ int main(int argc,char ** argv) try {
                     std::cout<<"\n\nBuilt target "<<Util::quote_str_single(target)<<" successfully!\n\n\n";
                 }else{
                     std::cout<<"\n\nBuilding target "<<Util::quote_str_single(target)<<" failed!\n\n\n";
+                    fail=true;
                 }
             }catch(std::exception &e){
                 std::cout<<"\n\nBuilding target "<<Util::quote_str_single(target)<<" failed: "<<e.what()<<"!\n\n\n";
             }
         }
     }
-    return 0;
+    return fail?EXIT_SUCCESS:EXIT_FAILURE;
 } catch(std::exception &e) {
     std::cerr<<"Unexpected Exception: "<<e.what()<<"\n";
-    return 1;
+    return EXIT_FAILURE;
 }
 

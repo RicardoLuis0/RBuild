@@ -197,6 +197,10 @@ namespace JSON {
             while(i<data.size()){
                 if(is_whitespace(data[i])){
                     i++;
+                }else if(data[i]=='#'){
+                    i++;
+                    while(i<data.size()&&data[i]!='\n')i++;
+                    if(i<data.size())i++;
                 }else if(data[i]=='/'&&(i+1<data.size())&&(data[i+1]=='/'||data[i+1]=='*')){
                     if(data[i+1]=='/'){
                         i+=2;

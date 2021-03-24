@@ -95,7 +95,7 @@ int main(int argc,char ** argv) try {
             }
         }
     }
-    return fail?EXIT_SUCCESS:EXIT_FAILURE;
+    return fail?EXIT_FAILURE:EXIT_SUCCESS;
 } catch(std::exception &e) {
     std::cerr<<"Unexpected Exception: "<<e.what()<<"\n";
     return EXIT_FAILURE;

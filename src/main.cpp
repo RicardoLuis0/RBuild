@@ -92,6 +92,7 @@ int main(int argc,char ** argv) try {
                 }
             }catch(std::exception &e){
                 std::cout<<"\n\nBuilding target "<<Util::quote_str_single(target)<<" failed: "<<e.what()<<"!\n\n\n";
+                fail=true;
             }
         }
     }

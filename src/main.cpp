@@ -32,7 +32,7 @@ static bool show_warnings(const std::vector<std::string> &warnings){
 
 int main(int argc,char ** argv) try {
     Args::init(argc,argv);
-    if(Args::unnamed.size()>0&&Args::unnamed[0].ends_with(".json")){
+    if(Args::unnamed.size()>0&&std::filesystem::exists(Args::unnamed[0])&&std::filesystem::is_regular_file(Args::unnamed[0])){
         if(!Args::named.contains("file")){
             Args::named.insert({"file",{Args::NamedArgType::VALUE,Args::unnamed[0]}});
         }

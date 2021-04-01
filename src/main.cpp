@@ -46,7 +46,7 @@ int main(int argc,char ** argv) try {
     Project project(project_json.get_obj(),warnings);
     
     {
-        std::vector<std::string> invalid_args=Util::filter_exclude(Util::keys(Args::named),std::vector<std::string>{"rebuild","file","verbose"});
+        std::vector<std::string> invalid_args=Util::filter_exclude(Util::keys(Args::named),std::vector<std::string>{"rebuild","file","verbose","gcc_override","gxx_override","clang_override","clangxx_override","failexit"});
         if(invalid_args.size()>0){
             warnings.push_back("Invalid commandline "+((invalid_args.size()==1?"parameter ":"parameters: ")+Util::join(Util::map(invalid_args,&Util::quote_str_single),", ")));
         }
@@ -94,10 +94,16 @@ int main(int argc,char ** argv) try {
                     std::cout<<"\n\nBuilt target "<<Util::quote_str_single(target)<<" successfully!\n\n\n";
                 }else{
                     std::cout<<"\n\nBuilding target "<<Util::quote_str_single(target)<<" failed!\n\n\n";
+                    if(Args::has_flag("failexit")){
+                        return EXIT_FAILURE;
+                    }
                     fail=true;
                 }
             }catch(std::exception &e){
                 std::cout<<"\n\nBuilding target "<<Util::quote_str_single(target)<<" failed: "<<e.what()<<"!\n\n\n";
+                if(Args::has_flag("failexit")){
+                    return EXIT_FAILURE;
+                }
                 fail=true;
             }
         }

@@ -197,9 +197,9 @@ namespace drivers {
         case LANG_C:
         case LANG_CPP:
             if(name=="gcc"){
-                return std::make_unique<compiler::gnu>((lang==LANG_C?"gcc":"g++"),flags,defines);
+                return std::make_unique<compiler::gnu>((lang==LANG_C?Args::namedArgOr("gcc_override","gcc"):Args::namedArgOr("gxx_override","g++")),flags,defines);
             }else if(name=="clang"){
-                return std::make_unique<compiler::gnu>((lang==LANG_C?"clang":"clang++"),flags,defines);
+                return std::make_unique<compiler::gnu>((lang==LANG_C?Args::namedArgOr("clang_override","clang"):Args::namedArgOr("clangxx_override","clang++")),flags,defines);
             }else{
                 throw std::runtime_error("unknown compiler "+Util::quote_str_single(name));
             }
@@ -224,9 +224,9 @@ namespace drivers {
     
     std::unique_ptr<linker::driver> get_linker(const std::string &name,const std::vector<std::string> &flags,const std::vector<std::string> &libs){
         if(name=="gcc"){
-            return std::make_unique<linker::gnu>("gcc","g++",flags,libs);
+            return std::make_unique<linker::gnu>(Args::namedArgOr("gcc_override","gcc"),Args::namedArgOr("gxx_override","g++"),flags,libs);
         }else if(name=="clang"){
-            return std::make_unique<linker::gnu>("clang","clang++",flags,libs);
+            return std::make_unique<linker::gnu>(Args::namedArgOr("clang_override","clang"),Args::namedArgOr("clangxx_override","clang++"),flags,libs);
         }else if(Util::contains(std::vector<std::string>{"ld","ld.gold","ld.lld"},name)){
             return std::make_unique<linker::generic>(name,flags,libs);
         }else if(Util::contains(std::vector<std::string>{"ar","llvm-ar"},name)){

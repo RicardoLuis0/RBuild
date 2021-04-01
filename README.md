@@ -18,6 +18,11 @@ The command-line arguments the program accepts are:
 * `-file=[json file]` to specify which file it uses as the project file, if no file is specified it uses "[current folder name].json"
 * `-rebuild` rebuild project from scratch, ignore already-built object files
 * `-verbose` print whole command line of executed compilers/linkers
+* `-gcc_override=[compiler]` use specified compiler instead of `gcc`
+* `-gxx_override=[compiler]` use specified compiler instead of `g++`
+* `-clang_override=[compiler]` use specified compiler instead of `clang`
+* `-clangxx_override=[compiler]` use specified compiler instead of `clang++`
+* `-failexit` exit at first fail
 
 The format for the json file is specified in [`info/json_layout.txt`](info/json_layout.txt)
 

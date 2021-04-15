@@ -27,7 +27,7 @@ fi
 if command -v RBuild &> /dev/null
 then
     
-    if [ $use_gcc_10 ]
+    if [ $use_gcc_10 == 1 ]
     then
         RBuild --gcc_override=gcc-10 --gxx_override=g++-10 --file=RBuild.json release
     else
@@ -36,7 +36,7 @@ then
     
 else
     
-    if [ $use_gcc_10 ]
+    if [ $use_gcc_10 == 1 ]
     then
         gxx="g++-10"
     else

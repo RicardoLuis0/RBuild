@@ -2,7 +2,7 @@
 
 Simple declarative buildsystem for C/C++, supports windows and linux platforms, should be trivial to port to other unix-like systems.
 
-It is built to be as simple as viable, and as such it doesn't handle:
+It is built to be as simple as viable, and as such it **doesn't** handle:
 * Dependency discovery
 * Pre/Post build steps
 * etc

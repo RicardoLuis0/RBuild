@@ -25,7 +25,7 @@ The command-line arguments the program accepts are:
 * `-clangxx_override=[compiler]` use specified compiler instead of `clang++`
 * `-failexit` exit at first fail
 
-The layout for the json file is specified in [`info/json_layout.txt`](info/json_layout.txt), and the documentation for each field is at [`FORMAT.md`](FORMAT.md)
+The layout for the json file is specified in [`info/json_layout.txt`](info/json_layout.txt), and the documentation for each field is at [`FORMAT.md`](FORMAT.md).
 
 ## Building
 
@@ -52,3 +52,8 @@ Requires MinGW
 #### Option 3 (itself)
 * run `RBuild` on the project folder, if the project is in a folder named `RBuild`, or `RBuild -file=RBuild.json` if the project is in a different folder
 * optionally manually add it to your path
+
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

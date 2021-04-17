@@ -67,5 +67,5 @@
             ]
         },
     },
-    "targets_default":"all"
+    "targets_default":"release"
 }

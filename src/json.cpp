@@ -209,7 +209,7 @@ namespace JSON {
                     }else{
                         i+=2;
                         if(i<data.size())i++;
-                        while(i<data.size()&&data[i-1]!='*'&&data[i]!='/')i++;
+                        while(i<data.size()&&!(data[i-1]=='*'&&data[i]=='/'))i++;
                         if(i<data.size())i++;
                     }
                 }else{

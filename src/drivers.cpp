@@ -164,7 +164,7 @@ namespace drivers {
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
             if(silent)std::cout<<"linking\n";
-            return Util::run(linker,Util::cat(std::vector<std::string>{"-o",file_out.string()},libs,flags,extra_flags,join_link_files()),&Util::alternate_cmdline_args_to_file_regular,silent)==0;
+            return Util::run(linker,Util::cat(std::vector<std::string>{"-o",file_out.string()},flags,extra_flags,join_link_files(),libs),&Util::alternate_cmdline_args_to_file_regular,silent)==0;
         }
         
         gnu::gnu(const std::string &lnk,const std::string &lnk_cpp,const std::vector<std::string> &fs,const std::vector<std::string> &ls) : generic(lnk,fs,ls),linker_cpp(lnk_cpp) {

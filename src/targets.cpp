@@ -31,9 +31,44 @@ static std::vector<source_t> srclist_opt(const JSON::object_t &obj,const std::st
         return {};
     }
 }
+[[maybe_unused]]
+static std::vector<source_t> srclist_multiopt(const JSON::object_t &obj,const std::vector<std::string> &names,std::vector<std::string> &warnings_out) {
+    auto it=obj.end();
+    std::string name;
+    bool err=false;
+    std::string err_str;
+    for(auto name2:names){
+        auto it2=obj.find(name2);
+        if(it2!=obj.end()) {
+            if(!it2->second.is_arr()){
+                err=true;
+                if(!err_str.empty()) err_str+=", ";
+                err_str+=JSON::json_except_format("In Source Array "+Util::quote_str_single(name2)+": ","Array",it->second.type_name());
+                continue;
+            }
+            if(it!=obj.end()){
+                err=true;
+                if(!err_str.empty()) err_str+=", ";
+                err_str+="In Source Array "+Util::quote_str_single(name)+": Duplicate Entry "+Util::quote_str_single(name2);
+                continue;
+            }
+            it=it2;
+            name=name2;
+        }
+    }
+    if(err){
+        throw JSON::JSON_Exception(err_str);
+    }
+    if(it!=obj.end()){
+        return mksrclist(it->second.get_arr(),name,warnings_out);
+    }else{
+        return {};
+    }
+}
 
 static source_t mksrc(const JSON::Element &elem,const std::string &name,std::vector<std::string> &warnings_out,size_t i) try {
-    static const std::string valid_keys[]{
+    using source_type=Targets::target::source_type;
+    std::vector<std::string> valid_keys {
         "name",
         "type",
         "include_list",
@@ -43,28 +78,48 @@ static source_t mksrc(const JSON::Element &elem,const std::string &name,std::vec
         return source_t(elem.get_str());
     }else if(elem.is_obj()){
         auto &eobj=elem.get_obj();
-        bool has_type=eobj.contains("type");
-        bool exclude_all=JSON::enum_opt(eobj,"type",{{"exclude",false},{"include",true}},false);
-        if((!has_type||exclude_all)&&eobj.contains("exclude_list")){
-            warnings_out.push_back("In Source Array "+Util::quote_str_single(name)+": In Index #"+std::to_string(i)+": Ignored Invalid Element 'exclude_list'");
+        source_type type=JSON::enum_opt(eobj,"type",
+                                        {
+                                            {"exclude",source_type::BLACKLIST},
+                                            {"blacklist",source_type::BLACKLIST},
+                                            {"include",source_type::WHITELIST},
+                                            {"whitelist",source_type::WHITELIST},
+                                            {"include_folders_exclude_files",source_type::FOLDER_WHITELIST_FILE_BLACKLIST},
+                                            {"folder_whitelist_file_blacklist",source_type::FOLDER_WHITELIST_FILE_BLACKLIST}
+                                        },source_type::NONE);
+        switch(type){
+        default:
+           throw std::runtime_error("unknown source type enum value");
+        case source_type::NONE:
+            break;
+        case source_type::BLACKLIST:
+            valid_keys.emplace_back("exclude_list");
+            valid_keys.emplace_back("blacklist");
+            break;
+        case source_type::WHITELIST:
+            valid_keys.emplace_back("include_list");
+            valid_keys.emplace_back("whitelist");
+            break;
+        case source_type::FOLDER_WHITELIST_FILE_BLACKLIST:
+            valid_keys.emplace_back("exclude_list");
+            valid_keys.emplace_back("blacklist");
+            valid_keys.emplace_back("include_list");
+            valid_keys.emplace_back("whitelist");
+            break;
         }
-        if((!has_type||!exclude_all)&&eobj.contains("include_list")){
-            warnings_out.push_back("In Source Array "+Util::quote_str_single(name)+": In Index #"+std::to_string(i)+": Ignored Invalid Element 'include_list'");
-        }
-        for(auto &e:Util::filter_exclude(Util::keys(eobj),Util::CArrayIteratorAdaptor(valid_keys))){
+        for(auto &e:Util::filter_exclude(Util::keys(eobj),valid_keys)){
             warnings_out.push_back("In Source Array "+Util::quote_str_single(name)+": In Index #"+std::to_string(i)+": Ignored Unknown Element "+Util::quote_str_single(e));
         }
-        return source_t(
-            JSON::str_nonopt(eobj,"name"),
-            has_type?
-            (
-                exclude_all?
-                srclist_opt(eobj,"include_list",warnings_out)
-                :Util::map(JSON::strlist_opt(eobj,"exclude_list"),[](const std::string &s)->source_t{return{.name=s,.include_exclude_list={},.exclude_all=false};})
-            )
-            :std::vector<source_t>{},
-            exclude_all
-        );
+        return {
+            .name=JSON::str_nonopt(eobj,"name"),
+            .blacklist=((type==source_type::BLACKLIST||type==source_type::FOLDER_WHITELIST_FILE_BLACKLIST)?
+                           JSON::strlist_multiopt(eobj,{"exclude_list","blacklist"})
+                           :std::vector<std::string>{}),
+            .whitelist=((type==source_type::WHITELIST||type==source_type::FOLDER_WHITELIST_FILE_BLACKLIST)?
+                           srclist_multiopt(eobj,{"include_list","whitelist"},warnings_out)
+                           :std::vector<source_t>{}),
+            .type=type,
+        };
     }else{
         throw JSON::JSON_Exception(std::vector<std::string>{"String","Object"},elem.type_name());
     }
@@ -86,7 +141,16 @@ static link_order_t mklinkorder(const JSON::object_t &obj,const std::string &nam
     if(obj.contains("weight")&&obj.at("weight").is_double()){
         warnings_out.push_back("In In Link Order Array "+Util::quote_str_single(name)+": In Index #"+std::to_string(i)+": Converting 'weight' from Double to Integer");
     }
-    return {.name=JSON::str_nonopt(obj,"name"),.weight=JSON::number_int_nonopt(obj,"weight"),.type=enum_opt(obj,"type",{{"normal",Targets::target::LINK_NORMAL},{"extra",Targets::target::LINK_EXTRA},{"full_path",Targets::target::LINK_FULL_PATH}},Targets::target::LINK_NORMAL)};
+    return {
+        .name=JSON::str_nonopt(obj,"name"),
+        .weight=JSON::number_int_nonopt(obj,"weight"),
+        .type=enum_opt(obj,"type",
+                       {
+                           {"normal",Targets::target::LINK_NORMAL},
+                           {"extra",Targets::target::LINK_EXTRA},
+                           {"full_path",Targets::target::LINK_FULL_PATH}
+                       },Targets::target::LINK_NORMAL)
+    };
 } catch(JSON::JSON_Exception &e){
     throw JSON::JSON_Exception("In Link Order Array "+Util::quote_str_single(name)+": In Index #"+std::to_string(i)+": "+e.msg_top);
 }

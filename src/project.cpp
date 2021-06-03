@@ -91,19 +91,27 @@ static void gather_sources(std::vector<std::filesystem::path> & out,const std::f
 }
 
 static void gather_sources(std::vector<std::filesystem::path> & out,const std::filesystem::path &root,const std::vector<Targets::target::source_t> &folders){
+    using source_type=Targets::target::source_type;
     if(!std::filesystem::exists(root)) return;
     
     if(std::filesystem::is_directory(root)){
         for(const Targets::target::source_t &folder:folders){
             std::filesystem::path folder_root(root/folder.name);
             if(std::filesystem::is_directory(folder_root)){
-                if(folder.exclude_all){
-                    gather_sources(out,folder_root,folder.include_exclude_list);
+                if(folder.type==source_type::WHITELIST){
+                    gather_sources(out,folder_root,folder.whitelist);
+                }else if(folder.type==source_type::FOLDER_WHITELIST_FILE_BLACKLIST){
+                    for(const std::filesystem::directory_entry &entry:std::filesystem::directory_iterator(folder_root)){
+                        if(std::filesystem::is_regular_file(entry)){
+                            if(Util::contains(folder.blacklist,entry.path().filename().string()))continue;
+                            out.push_back(entry);
+                        }
+                    }
+                    gather_sources(out,folder_root,folder.whitelist);
                 }else{
                     std::vector<std::filesystem::path> folder_folders;
-                    std::vector<std::string> exclude(Util::map(folder.include_exclude_list,[](const auto &s)->std::string{return s.name;}));
                     for(const std::filesystem::directory_entry &entry:std::filesystem::directory_iterator(folder_root)){
-                        if(Util::contains(exclude,entry.path().filename().string()))continue;
+                        if(Util::contains(folder.blacklist,entry.path().filename().string()))continue;
                         if(std::filesystem::is_regular_file(entry)){
                             out.push_back(entry);
                         }else if(std::filesystem::is_directory(entry)){

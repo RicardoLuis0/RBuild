@@ -22,16 +22,32 @@ namespace JSON {
     using object_t=std::map<std::string,Element>;
     using array_t=std::vector<Element>;
     
+    inline std::string json_except_format(const std::string &pre,const std::string &expected,const std::string &is){
+        return pre+"Expected type "+Util::quote_str_single(expected)+", got type "+Util::quote_str_single(is);
+    }
+    inline std::string json_except_format(const std::string &pre,const std::vector<std::string> &expected,const std::string &is){
+        return pre+"Expected "+(expected.size()==1?"type":"types")+" "+Util::join_or(Util::map(expected,Util::quote_str_single))+", got type "+Util::quote_str_single(is);
+    }
+    inline std::string json_except_format(const std::string &expected,const std::string &is){
+        return json_except_format("",expected,is);
+    }
+    inline std::string json_except_format(const std::vector<std::string> &expected,const std::string &is){
+        return json_except_format("",expected,is);
+    }
+    
     class JSON_Exception : public std::runtime_error {
     public:
         std::string msg_top;
         JSON_Exception(const std::string &s):runtime_error("JSON: "+s),msg_top(s){}
+        
         JSON_Exception(const std::string &pre,const std::string &expected,const std::string &is):
-            JSON_Exception(pre+"Expected type "+Util::quote_str_single(expected)+", got type "+Util::quote_str_single(is)){}
+            JSON_Exception(json_except_format(pre,expected,is)){}
         JSON_Exception(const std::string &pre,const std::vector<std::string> &expected,const std::string &is):
-            JSON_Exception(pre+"Expected "+(expected.size()==1?"type":"types")+" "+Util::join_or(Util::map(expected,Util::quote_str_single))+", got type "+Util::quote_str_single(is)){}
-        JSON_Exception(const std::string &expected,const std::string &is):JSON_Exception("",expected,is){}
-        JSON_Exception(const std::vector<std::string> &expected,const std::string &is):JSON_Exception("",expected,is){}
+            JSON_Exception(json_except_format(pre,expected,is)){}
+        JSON_Exception(const std::string &expected,const std::string &is):
+            JSON_Exception(json_except_format(expected,is)){}
+        JSON_Exception(const std::vector<std::string> &expected,const std::string &is):
+            JSON_Exception(json_except_format(expected,is)){}
     };
     
     class Element {
@@ -168,14 +184,50 @@ namespace JSON {
         throw JSON_Exception("In String Array: "+e.msg_top);
     }
     
-    inline std::vector<std::string> strlist_opt(const object_t &obj,std::string name) try {
+    inline std::vector<std::string> strlist_opt(const object_t &obj,const std::string &name) try {
         auto it=obj.find(name);
         return (it!=obj.end())?mkstrlist(it->second.get_arr()):std::vector<std::string>{};
     } catch(JSON_Exception &e){
         throw JSON_Exception("In String Array "+Util::quote_str_single(name)+": "+e.msg_top);
     }
     
-    inline std::vector<std::string> strlist_nonopt(const object_t &obj,std::string name) try {
+    inline std::vector<std::string> strlist_multiopt(const object_t &obj,const std::vector<std::string> &names) {
+        auto it=obj.end();
+        std::string name;
+        bool err=false;
+        std::string err_str;
+        for(auto name2:names){
+            auto it2=obj.find(name2);
+            if(it2!=obj.end()) {
+                if(!it2->second.is_arr()){
+                    err=true;
+                    if(!err_str.empty()) err_str+=", ";
+                    err_str+=JSON::json_except_format("In String Array "+Util::quote_str_single(name2)+": ","Array",it->second.type_name());
+                    continue;
+                }
+                if(it!=obj.end()){
+                    err=true;
+                    if(!err_str.empty()) err_str+=", ";
+                    err_str+="In String Array "+Util::quote_str_single(name)+": Duplicate Entry "+Util::quote_str_single(name2);
+                    continue;
+                }
+                it=it2;
+                name=name2;
+            } else {
+                return {};
+            }
+        }
+        if(err){
+            throw JSON::JSON_Exception(err_str);
+        }
+        try {
+            return (it!=obj.end())?mkstrlist(it->second.get_arr()):std::vector<std::string>{};
+        } catch(JSON_Exception &e){
+            throw JSON_Exception("In String Array "+Util::quote_str_single(name)+": "+e.msg_top);
+        }
+    }
+    
+    inline std::vector<std::string> strlist_nonopt(const object_t &obj,const std::string &name) try {
         return mkstrlist(obj.at(name).get_arr());
     } catch(JSON_Exception &e){
         throw JSON_Exception("In String Array "+Util::quote_str_single(name)+": "+e.msg_top);
@@ -200,14 +252,14 @@ namespace JSON {
         throw JSON_Exception("In "+Util::quote_str_single(name)+": "+e.msg_top);
     }
     
-    inline bool bool_opt(const object_t &obj,std::string name,bool opt_default) try {
+    inline bool bool_opt(const object_t &obj,const std::string &name,bool opt_default) try {
         auto it=obj.find(name);
         return (it!=obj.end())?it->second.get_bool():opt_default;
     } catch(JSON_Exception &e){
         throw JSON_Exception("In "+Util::quote_str_single(name)+": "+e.msg_top);
     }
     
-    inline std::string str_nonopt(const object_t &obj,std::string name) try {
+    inline std::string str_nonopt(const object_t &obj,const std::string &name) try {
         return obj.at(name).get_str();
     } catch(JSON_Exception &e) {
         throw JSON_Exception("In "+Util::quote_str_single(name)+": "+e.msg_top);
@@ -215,14 +267,14 @@ namespace JSON {
         throw JSON_Exception("Missing String Element '"+Util::quote_str_single(name)+"'");
     }
     
-    inline std::string str_opt(const object_t &obj,std::string name,std::string opt_default) try {
+    inline std::string str_opt(const object_t &obj,const std::string &name,const std::string &opt_default) try {
         auto it=obj.find(name);
         return (it!=obj.end())?it->second.get_str():opt_default;
     } catch(JSON_Exception &e){
         throw JSON_Exception("In "+Util::quote_str_single(name)+": "+e.msg_top);
     }
     
-    inline std::optional<std::string> str_opt(const object_t &obj,std::string name) try {
+    inline std::optional<std::string> str_opt(const object_t &obj,const std::string &name) try {
         auto it=obj.find(name);
         return (it!=obj.end())?it->second.get_str():std::optional<std::string>{std::nullopt};
     } catch(JSON_Exception &e){

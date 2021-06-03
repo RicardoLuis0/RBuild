@@ -16,18 +16,19 @@ public:
             LINK_FULL_PATH,
             LINK_EXTRA,
         };
+        enum class source_type {
+            NONE,
+            BLACKLIST,
+            WHITELIST,
+            FOLDER_WHITELIST_FILE_BLACKLIST,
+        };
         
         struct source_t {
-            source_t()=default;
-            inline source_t(const std::string &s):name(s){
-            }
-            inline source_t(const std::string &s,const std::vector<source_t> &sv,bool b):name(s),include_exclude_list(sv),exclude_all(b){
-            }
-            inline source_t(const std::string &s,std::vector<source_t> && sv,bool b):name(s),include_exclude_list(std::move(sv)),exclude_all(b){
-            }
             std::string name;
-            std::vector<source_t> include_exclude_list;
-            bool exclude_all=false;
+            std::vector<std::string> blacklist;
+            std::vector<source_t> whitelist;
+            
+            source_type type;
         };
         
         struct link_order_t {

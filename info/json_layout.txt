@@ -18,9 +18,9 @@
             "sources": required  array [
                 string | object {
                     "name": required string,
-                    "type": enum string "exclude" "blacklist" "include" "whitelist" "include_folders_exclude_files" "folder_whitelist_file_blacklist",
-                    "exclude_list" or "blacklist": if type is "exclude" or "blacklist" or "include_folders_exclude_files" or "folder_whitelist_file_blacklist"  optional array [ string ],
-                    "include_list" or "whitelist": if type is "include" or "whitelist" or "include_folders_exclude_files" or "folder_whitelist_file_blacklist" optional array [ string | object self ],
+                    "type": enum string "exclude" "blacklist" "include" "whitelist" "include_folders_exclude_files" "exclude_files_include_folders" "folder_whitelist_file_blacklist" "file_blacklist_folder_whitelist",
+                    "exclude_list" or "blacklist": if type is "exclude" or "blacklist" or "include_folders_exclude_files" or "exclude_files_include_folders" or "file_blacklist_folder_whitelist" or "folder_whitelist_file_blacklist"  optional array [ string ],
+                    "include_list" or "whitelist": if type is "include" or "whitelist" or "include_folders_exclude_files" or "exclude_files_include_folders" or "folder_whitelist_file_blacklist" or "file_blacklist_folder_whitelist" optional array [ string | object self ],
                 }
             ],
             "includes": optional array [ string ],

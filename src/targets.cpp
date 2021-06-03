@@ -85,7 +85,9 @@ static source_t mksrc(const JSON::Element &elem,const std::string &name,std::vec
                                             {"include",source_type::WHITELIST},
                                             {"whitelist",source_type::WHITELIST},
                                             {"include_folders_exclude_files",source_type::FOLDER_WHITELIST_FILE_BLACKLIST},
-                                            {"folder_whitelist_file_blacklist",source_type::FOLDER_WHITELIST_FILE_BLACKLIST}
+                                            {"exclude_files_include_folders",source_type::FOLDER_WHITELIST_FILE_BLACKLIST},
+                                            {"folder_whitelist_file_blacklist",source_type::FOLDER_WHITELIST_FILE_BLACKLIST},
+                                            {"file_blacklist_folder_whitelist",source_type::FOLDER_WHITELIST_FILE_BLACKLIST}
                                         },source_type::NONE);
         switch(type){
         default:

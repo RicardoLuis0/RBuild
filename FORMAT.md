@@ -42,7 +42,7 @@ Currently supported linkers are:
 
 A source file/folder can be either a string or a source object. If is an object, the properties are:
 * `name`: file/folder
-* `mode`: ignored if file, can be `exclude` (or `blacklist`), `include` (or `whitelist`), `include_folders_exclude_files` (or `folder_whitelist_file_blacklist`).
+* `type`: ignored if file, can be `exclude` (or `blacklist`), `include` (or `whitelist`), `include_folders_exclude_files` (or `folder_whitelist_file_blacklist`/`exclude_files_include_folders`/`file_blacklist_folder_whitelist`).
 * `exclude_list` or `blacklist`: array of strings (files/folders) to be ignored
 * `include_list` or `whitelist`: array of sources (files/folders) to be included
 

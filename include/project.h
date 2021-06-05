@@ -3,6 +3,7 @@
 #include "json.h"
 #include "targets.h"
 
+extern int num_jobs;
 
 class Project {
 public:

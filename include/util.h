@@ -7,6 +7,9 @@
 #include <type_traits>
 #include <filesystem>
 
+#define __PP_JOIN(a,b) a##b
+#define PP_JOIN(a,b) __PP_JOIN(a,b)
+
 inline std::string operator"" _s(const char * s,size_t n){
     return {s,n};
 }
@@ -189,13 +192,29 @@ namespace Util {
         return v;
     }
     
+    template<std::ranges::input_range R,std::invocable<typename R::value_type> Fn_T>
+    size_t count_if(const R &r,const Fn_T &f) requires std::convertible_to<typename std::invoke_result<Fn_T,typename R::value_type>::type,bool> {
+        size_t acc=0;
+        for(const auto &e:r){
+            if(std::invoke(f,e)){
+                acc++;
+            }
+        }
+        return acc;
+    }
+    
     inline std::vector<const char *> get_cstrs(const std::vector<std::string> &v){
         return Util::map(v,&std::string::c_str);
     }
     
-    int run_noexcept(const std::string &program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&)=nullptr) noexcept;
+    struct redirect_data {
+        std::string s_stdout;
+        std::string s_stderr;
+    };
     
-    int run(std::string program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&)=nullptr,bool silent=false);
+    int run_noexcept(const std::string &program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&)=nullptr,bool silent=false,redirect_data * redir_data=nullptr) noexcept;
+    
+    int run(std::string program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&)=nullptr,bool silent=false,redirect_data * redir_data=nullptr);
     
     std::string alternate_cmdline_args_to_file(const std::string&,const std::vector<std::string>&,const std::string &file_arg);
     inline std::string alternate_cmdline_args_to_file_regular(const std::string&p,const std::vector<std::string>&v){

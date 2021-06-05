@@ -30,6 +30,20 @@ static bool show_warnings(const std::vector<std::string> &warnings){
     return true;
 }
 
+int num_jobs=0;
+
+const char * valid_args[] {
+    "rebuild",
+    "file",
+    "verbose",
+    "gcc_override",
+    "gxx_override",
+    "clang_override",
+    "clangxx_override",
+    "failexit",
+    "num_jobs"
+};
+
 int main(int argc,char ** argv) try {
     Args::init(argc,argv);
     if(Args::unnamed.size()>0&&std::filesystem::exists(Args::unnamed[0])&&std::filesystem::is_regular_file(Args::unnamed[0])){
@@ -40,13 +54,24 @@ int main(int argc,char ** argv) try {
     }
     std::vector<std::string> warnings;
     
+    try{
+        std::string snjs(Args::namedArgOr("num_jobs","0"));
+        if(Util::count_if(snjs,[](char c){return c<'0'||c>'9';})>0){
+            warnings.push_back("Argument 'num_jobs' must be an integer, Argument Ignored");
+        } else {
+            num_jobs=std::stoi(snjs);
+        }
+    }catch(std::exception &e){
+        warnings.push_back("Unkonwn error while converting Argument 'num_jobs' to an integer, Argument Ignored");
+    }
+    
     std::string project_file=Args::namedArgOr("file",std::filesystem::current_path().filename().string()+".json");
     
     auto project_json=JSON::parse(Util::readfile(project_file));
     Project project(project_json.get_obj(),warnings);
     
     {
-        std::vector<std::string> invalid_args=Util::filter_exclude(Util::keys(Args::named),std::vector<std::string>{"rebuild","file","verbose","gcc_override","gxx_override","clang_override","clangxx_override","failexit"});
+        std::vector<std::string> invalid_args=Util::filter_exclude(Util::keys(Args::named),Util::CArrayIteratorAdaptor(valid_args));
         if(invalid_args.size()>0){
             warnings.push_back("Invalid commandline "+((invalid_args.size()==1?"parameter ":"parameters: ")+Util::join(Util::map(invalid_args,&Util::quote_str_single),", ")));
         }

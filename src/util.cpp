@@ -219,16 +219,19 @@ namespace Util {
         throw std::runtime_error("Failed to write to "+Util::quote_str_single(filename)+" : "+e.what());
     }
     
-    int run_noexcept(const std::string &program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&)) noexcept {
+    int run_noexcept(const std::string &program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&),bool silent,redirect_data * redir_data) noexcept {
         try{
-            return run(program,args_in,alternate_cmdline);
+            return run(program,args_in,alternate_cmdline,silent,redir_data);
         }catch(std::exception &e){
             std::cerr<<"Run "+Util::quote_str_single(program)+" Failed: "<<e.what()<<"\n";
             return -1;
         }
     }
     
-    int run(std::string program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&),bool silent){
+    int run(std::string program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&),bool silent,redirect_data * redir_data){
+        if(redir_data){
+            throw std::runtime_error("output redirections unimplemented");
+        }
         #if defined(__unix__)
             std::vector<std::string> args_v;
             args_v.reserve(std::size(args_in)+1);

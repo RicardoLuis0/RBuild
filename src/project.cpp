@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <thread>
 
 Project::Project(const JSON::object_t &project,std::vector<std::string> &warnings_out) :
     targets(project.at("targets").get_obj(),warnings_out),
@@ -239,31 +240,36 @@ bool Project::build_target(const std::string & target_name) try{
         }
     }
     
-    for(const auto &c_src:sources_c){
-        path c_src_out(get_obj_path(working_path,src_base,c_src));
-        if(!cpp_compiler_driver->needs_compile(working_path,src_base,c_src,c_src_out)||c_compiler_driver->compile(working_path,src_base,c_src,c_src_out,{})){
-            linker_driver->add_file(get_link_order(target,out_base,c_src_out),c_src_out);
-        }else{
-            throw std::runtime_error("Failed to compile "+Util::quote_str_single(std::filesystem::relative(c_src).string()));
-        }
-    }
-    
-    for(const auto &cpp_src:sources_cpp){
-        path cpp_src_out(get_obj_path(working_path,src_base,cpp_src));
-        if(!cpp_compiler_driver->needs_compile(working_path,src_base,cpp_src,cpp_src_out)||cpp_compiler_driver->compile(working_path,src_base,cpp_src,cpp_src_out,{})){
-            linker_driver->add_file(get_link_order(target,out_base,cpp_src_out),cpp_src_out);
-        }else{
-            throw std::runtime_error("Failed to compile "+Util::quote_str_single(std::filesystem::relative(cpp_src).string()));
-        }
-    }
-    
-    for(const auto &asm_src:sources_asm){
-        path asm_src_out(get_obj_path(working_path,src_base,asm_src));
-        if(!asm_compiler_driver->needs_compile(working_path,src_base,asm_src,asm_src_out)||asm_compiler_driver->compile(working_path,src_base,asm_src,asm_src_out,{})){
-            linker_driver->add_file(get_link_order(target,out_base,asm_src_out),asm_src_out);
-        }else{
-            throw std::runtime_error("Failed to compile "+Util::quote_str_single(std::filesystem::relative(asm_src).string()));
-        }
+    if(num_jobs>0){
+        
+        #define COMPILE_JOB(lang)\
+            throw std::runtime_error("compilation jobs not currently implemented");
+        
+        COMPILE_JOB(c);
+        COMPILE_JOB(cpp);
+        COMPILE_JOB(asm);
+        
+        #undef COMPILE_JOB
+        
+    }else{
+        
+        #define COMPILE_NOJOB(lang)\
+            for(const auto & src : PP_JOIN(sources_,lang) ){\
+                path src_out (get_obj_path(working_path,src_base,src));\
+                if(!PP_JOIN(lang,_compiler_driver)->needs_compile(working_path,src_base,src,src_out)\
+                  ||PP_JOIN(lang,_compiler_driver)->compile(working_path,src_base,src,src_out,{})){\
+                    linker_driver->add_file(get_link_order(target,out_base,src_out),src_out);\
+                }else{\
+                    throw std::runtime_error("Failed to compile "+Util::quote_str_single(std::filesystem::relative(src).string()));\
+                }\
+            }
+        
+        COMPILE_NOJOB(c);
+        COMPILE_NOJOB(cpp);
+        COMPILE_NOJOB(asm);
+        
+        #undef COMPILE_NOJOB
+        
     }
     
     std::string out=(

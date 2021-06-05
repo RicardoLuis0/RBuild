@@ -52,17 +52,13 @@ int main(int argc,char ** argv) try {
         }
         Args::unnamed.erase(Args::unnamed.begin());
     }
+    
     std::vector<std::string> warnings;
     
     try{
-        std::string snjs(Args::namedArgOr("num_jobs","0"));
-        if(Util::count_if(snjs,[](char c){return c<'0'||c>'9';})>0){
-            warnings.push_back("Argument 'num_jobs' must be an integer, Argument Ignored");
-        } else {
-            num_jobs=std::stoi(snjs);
-        }
+        num_jobs=Args::namedIntArgOr("num_jobs",0,false);
     }catch(std::exception &e){
-        warnings.push_back("Unkonwn error while converting Argument 'num_jobs' to an integer, Argument Ignored");
+        warnings.push_back(std::string(e.what())+", Argument Ignored");
     }
     
     std::string project_file=Args::namedArgOr("file",std::filesystem::current_path().filename().string()+".json");

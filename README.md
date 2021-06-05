@@ -24,6 +24,8 @@ The command-line arguments the program accepts are:
 * `-clang_override=[compiler]` use specified compiler instead of `clang`
 * `-clangxx_override=[compiler]` use specified compiler instead of `clang++`
 * `-failexit` exit at first fail
+* `-ignore_warnings` don't prompt, always continue if there are warnings
+* `-num_jobs=[num_jobs]` execute `[num_jobs]` compilations in parallel
 
 The layout for the json file is specified in [`info/json_layout.txt`](info/json_layout.txt), and the documentation for each field is at [`FORMAT.md`](FORMAT.md).
 

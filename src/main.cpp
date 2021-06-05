@@ -9,22 +9,32 @@
 
 #include <cstdlib>
 
-static bool show_warnings(const std::vector<std::string> &warnings){
+static bool show_warnings(std::vector<std::string> &warnings){
+    bool show_prompt=true;
+    try {
+        show_prompt=!Args::has_flag("ignore_warnings");
+    } catch (std::exception &e){
+        warnings.push_back(e.what());
+    }
     if(warnings.size()>0){
         for(auto &warning:warnings){
             std::cout<<"Warning: "<<warning<<"\n";
         }
-        while(true){
-            std::cout<<"Continue(Yes/No) ? ";
-            std::string in;
-            std::getline(std::cin,in);
-            if(in=="yes"||in=="Yes"||in=="y"||in=="Y"){
-                std::cout<<"Continuing...\n";
-                return true;
-            }else if(in=="no"||in=="No"||in=="n"||in=="N"){
-                std::cout<<"Cancelling...\n";
-                return false;
+        if(show_prompt){
+            while(true){
+                std::cout<<"Continue(Yes/No) ? ";
+                std::string in;
+                std::getline(std::cin,in);
+                if(in=="yes"||in=="Yes"||in=="y"||in=="Y"){
+                    std::cout<<"Continuing...\n";
+                    return true;
+                }else if(in=="no"||in=="No"||in=="n"||in=="N"){
+                    std::cout<<"Cancelling...\n";
+                    return false;
+                }
             }
+        } else {
+            std::cout<<"Warning: Warning Prompt Skipped ('ignore_warnings' flag)\n";
         }
     }
     return true;
@@ -41,7 +51,8 @@ const char * valid_args[] {
     "clang_override",
     "clangxx_override",
     "failexit",
-    "num_jobs"
+    "num_jobs",
+    "ignore_warnings",
 };
 
 int main(int argc,char ** argv) try {

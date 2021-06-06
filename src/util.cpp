@@ -13,6 +13,8 @@
     #include <unistd.h>
     #include <spawn.h>
     #include <sys/wait.h>
+    #include <sys/ioctl.h>
+    #include <fcntl.h>
     extern char **environ;
 #elif defined(_WIN32)
     #define WIN32_LEAN_AND_MEAN
@@ -238,9 +240,6 @@ namespace Util {
     
     int run(std::string program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&),bool silent,redirect_data * redir_data){
         #if defined(__unix__)
-            if(redir_data){
-                throw std::runtime_error("output redirections unimplemented");
-            }
             std::vector<std::string> args_v;
             args_v.reserve(std::size(args_in)+1);
             args_v.push_back(program);
@@ -249,7 +248,10 @@ namespace Util {
             args.push_back(nullptr);
             pid_t pid;
             if(!silent)print_sync(program+" "+join(map(args_in,&quote_str_double))+"\n");
-            if(int err=posix_spawnp(&pid,program.c_str(),NULL,NULL,const_cast<char*const*>(args.data()),environ);err==0){
+            if(redir_data){
+                redir_data->start();
+            }
+            if(int err=posix_spawnp(&pid,program.c_str(),redir_data?&redir_data->f_acts:nullptr,nullptr,const_cast<char*const*>(args.data()),environ);err==0){
                 int status;
                 waitpid(pid,&status,0);
                 return WIFEXITED(status)?WEXITSTATUS(status):-1;
@@ -258,8 +260,6 @@ namespace Util {
             }
         #elif defined(_WIN32)
             if(!program.ends_with(".exe"))program+=".exe";
-            //_spawnvp(_P_WAIT,program.c_str(),const_cast<char*const*>(args.data()))==0;
-            //_spawnvp could've been used for windows instead of CreateProcessA, but it has a 1024 byte argument limit which is too limiting
             
             bool path_found=false;
             std::string path=resolve_path(program,path_found);
@@ -323,10 +323,40 @@ namespace Util {
             remove(tmpfile_name.c_str());
         }
     }
-    
-    redirect_data::redirect_data():running(false){
+
+    redirect_data::redirect_data():running(false),close_fds(false){
         #if defined(__unix__)
-            //TODO
+            
+            if(pipe2(p_stdin,O_NONBLOCK)!=0){
+                throw std::runtime_error("stdin pipe creation failed: "+std::string(strerror(errno)));
+            }
+            if(pipe2(p_stdout,O_NONBLOCK)!=0){
+                close(p_stdin[0]);
+                close(p_stdin[1]);
+                throw std::runtime_error("stdout pipe creation failed: "+std::string(strerror(errno)));
+            }
+            if(pipe2(p_stderr,O_NONBLOCK)!=0){
+                close(p_stdin[0]);
+                close(p_stdin[1]);
+                close(p_stdout[0]);
+                close(p_stdout[1]);
+                throw std::runtime_error("stdout pipe creation failed: "+std::string(strerror(errno)));
+            }
+            
+            posix_spawn_file_actions_init(&f_acts);
+            
+            posix_spawn_file_actions_addclose(&f_acts,p_stdin[1]);
+            posix_spawn_file_actions_addclose(&f_acts,p_stdout[0]);
+            posix_spawn_file_actions_addclose(&f_acts,p_stderr[0]);
+            posix_spawn_file_actions_adddup2(&f_acts,p_stdin[0],STDIN_FILENO);
+            posix_spawn_file_actions_adddup2(&f_acts,p_stdout[1],STDOUT_FILENO);
+            posix_spawn_file_actions_adddup2(&f_acts,p_stderr[1],STDERR_FILENO);
+            posix_spawn_file_actions_addclose(&f_acts,p_stdin[0]);
+            posix_spawn_file_actions_addclose(&f_acts,p_stdout[1]);
+            posix_spawn_file_actions_addclose(&f_acts,p_stderr[1]);
+            
+            close_fds=true;
+            
         #elif defined(_WIN32)
             {
                 UUID uuid;
@@ -403,7 +433,14 @@ namespace Util {
         s_stdout=other.s_stdout;
         s_stderr=other.s_stderr;
         #if defined(__unix__)
-            //TODO
+            f_acts=other.f_acts;
+            p_stdin[0]=other.p_stdin[0];
+            p_stdin[1]=other.p_stdin[1];
+            p_stdout[0]=other.p_stdout[0];
+            p_stdout[1]=other.p_stdout[1];
+            p_stderr[0]=other.p_stderr[0];
+            p_stderr[1]=other.p_stderr[1];
+            other.close_fds=false;
         #elif defined(_WIN32)
             hStdInPipe=other.hStdInPipe;
             other.hStdInPipe=nullptr;
@@ -422,7 +459,14 @@ namespace Util {
     
     redirect_data::~redirect_data(){
         #if defined(__unix__)
-            //TODO
+            if(close_fds){
+                close(p_stdin[0]);
+                close(p_stdin[1]);
+                close(p_stdout[0]);
+                close(p_stdout[1]);
+                close(p_stderr[0]);
+                close(p_stderr[1]);
+            }
         #elif defined(_WIN32)
             if(hStdIn){
                 CloseHandle(hStdIn);
@@ -448,7 +492,19 @@ namespace Util {
     void redirect_data::thread_main() try {
         while(running){
             #if defined(__unix__)
-                //TODO
+                int n;
+                if(ioctl(p_stdout[0],FIONREAD,&n)==0&&n>0){
+                    char buf[n+1];
+                    int r=read(p_stdout[0],buf,n);
+                    buf[r]=0;
+                    s_stdout+=std::string(buf);
+                }
+                if(ioctl(p_stderr[0],FIONREAD,&n)==0&&n>0){
+                    char buf[n+1];
+                    int r=read(p_stderr[0],buf,n);
+                    buf[r]=0;
+                    s_stderr+=std::string(buf);
+                }
             #elif defined(_WIN32)
                 DWORD num;
                 if(!PeekNamedPipe(hStdOutPipe,nullptr,0,nullptr,&num,nullptr)){

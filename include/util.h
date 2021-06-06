@@ -11,6 +11,13 @@
 
 #define __PP_JOIN(a,b) a##b
 #define PP_JOIN(a,b) __PP_JOIN(a,b)
+
+#if defined(__unix__)
+    #include <unistd.h>
+    #include <spawn.h>
+#endif // defined
+
+
 #if defined(__linux__)
     #define CUR_PLATFORM "linux"
 #elif defined(_WIN32)
@@ -233,7 +240,11 @@ namespace Util {
         std::string s_stderr;
         std::thread t;
         #if defined(__unix__)
-            //TODO
+            bool close_fds;
+            posix_spawn_file_actions_t f_acts;
+            int p_stdin[2];
+            int p_stdout[2];
+            int p_stderr[2];
         #elif defined(_WIN32)
             std::string sUUID;
             void * hStdInPipe;

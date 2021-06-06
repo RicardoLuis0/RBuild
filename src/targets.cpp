@@ -134,6 +134,7 @@ static std::optional<std::string> mkinc(const JSON::Element &elem,const std::str
     if(elem.is_str()){
         return elem.get_str();
     }else if(elem.is_obj()){
+        std::optional<std::string> out;
         std::vector<std::string> valid_keys {
             "type",
         };
@@ -147,18 +148,26 @@ static std::optional<std::string> mkinc(const JSON::Element &elem,const std::str
                 enum conditions{
                     PLATFORM,
                 };
+                valid_keys.push_back("condition");
+                valid_keys.push_back("cases");
                 conditions cond=JSON::enum_nonopt<conditions>(eobj,"condition", { {"platform",PLATFORM}, });
                 JSON::object_t cases=JSON::obj_nonopt(eobj,"cases");
                 switch(cond){
                 case PLATFORM:
-                    return JSON::str_opt(cases,CUR_PLATFORM);
+                    out=JSON::str_opt(cases,CUR_PLATFORM);
+                    break;
                 default:
                     throw std::runtime_error("invalid include target condition");
                 }
             }
+            break;
         default:
             throw std::runtime_error("invalid include target type");
         }
+        for(auto &e:Util::filter_exclude(Util::keys(eobj),valid_keys)){
+            warnings_out.push_back("In Target Array "+Util::quote_str_single(name)+": In Index #"+std::to_string(i)+": Ignored Unknown Element "+Util::quote_str_single(e));
+        }
+        return out;
     }else{
         throw JSON::JSON_Exception(std::vector<std::string>{"String","Object"},elem.type_name());
     }

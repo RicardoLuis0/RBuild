@@ -232,7 +232,7 @@ namespace JSON {
     } catch(JSON_Exception &e){
         throw JSON_Exception("In String Array "+Util::quote_str_single(name)+": "+e.msg_top);
     } catch(std::out_of_range &e){
-        throw JSON_Exception("Missing String Array Element '"+Util::quote_str_single(name)+"'");
+        throw JSON_Exception("Missing String Array Element "+Util::quote_str_single(name));
     }
     
     template<typename T>
@@ -252,6 +252,28 @@ namespace JSON {
         throw JSON_Exception("In "+Util::quote_str_single(name)+": "+e.msg_top);
     }
     
+    template<typename T>
+    T enum_nonopt(const object_t &obj,const std::string &name,const std::map<std::string,T> &valid_values) try {
+        std::string s=obj.at(name).get_str();
+        if(auto vit=valid_values.find(s);vit!=valid_values.end()){
+            return vit->second;
+        }else{
+            throw std::runtime_error("Invalid value "+Util::quote_str_single(s)+" for "+Util::quote_str_single(name)+", must be one of { "+Util::join(Util::map(Util::keys(valid_values),&Util::quote_str_single),", ")+" }");
+        }
+    } catch(JSON_Exception &e){
+        throw JSON_Exception("In "+Util::quote_str_single(name)+": "+e.msg_top);
+    } catch(std::out_of_range &e){
+        throw JSON_Exception("Missing Enum Element "+Util::quote_str_single(name));
+    }
+    
+    inline JSON::object_t obj_nonopt(const object_t &obj,const std::string &name) try {
+        return obj.at(name).get_obj();
+    } catch(JSON_Exception &e){
+        throw JSON_Exception("In "+Util::quote_str_single(name)+": "+e.msg_top);
+    } catch(std::out_of_range &e){
+        throw JSON_Exception("Missing Object Element "+Util::quote_str_single(name));
+    }
+    
     inline bool bool_opt(const object_t &obj,const std::string &name,bool opt_default) try {
         auto it=obj.find(name);
         return (it!=obj.end())?it->second.get_bool():opt_default;
@@ -264,7 +286,7 @@ namespace JSON {
     } catch(JSON_Exception &e) {
         throw JSON_Exception("In "+Util::quote_str_single(name)+": "+e.msg_top);
     } catch(std::out_of_range &e){
-        throw JSON_Exception("Missing String Element '"+Util::quote_str_single(name)+"'");
+        throw JSON_Exception("Missing String Element "+Util::quote_str_single(name));
     }
     
     inline std::string str_opt(const object_t &obj,const std::string &name,const std::string &opt_default) try {
@@ -289,7 +311,7 @@ namespace JSON {
     } catch(JSON_Exception &e) {
         throw JSON_Exception("In "+Util::quote_str_single(name)+": "+e.msg_top);
     } catch(std::out_of_range &e){
-        throw JSON_Exception("Missing Numeric Element '"+Util::quote_str_single(name)+"'");
+        throw JSON_Exception("Missing Numeric Element "+Util::quote_str_single(name));
     }
     
     inline std::optional<int> number_int_opt(const object_t &obj,std::string name) try {

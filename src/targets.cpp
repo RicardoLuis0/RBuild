@@ -31,6 +31,7 @@ static std::vector<source_t> srclist_opt(const JSON::object_t &obj,const std::st
         return {};
     }
 }
+
 [[maybe_unused]]
 static std::vector<source_t> srclist_multiopt(const JSON::object_t &obj,const std::vector<std::string> &names,std::vector<std::string> &warnings_out) {
     auto it=obj.end();
@@ -68,15 +69,15 @@ static std::vector<source_t> srclist_multiopt(const JSON::object_t &obj,const st
 
 static source_t mksrc(const JSON::Element &elem,const std::string &name,std::vector<std::string> &warnings_out,size_t i) try {
     using source_type=Targets::target::source_type;
-    std::vector<std::string> valid_keys {
-        "name",
-        "type",
-        "include_list",
-        "exclude_list",
-    };
     if(elem.is_str()){
         return source_t(elem.get_str());
     }else if(elem.is_obj()){
+        std::vector<std::string> valid_keys {
+            "name",
+            "type",
+            "include_list",
+            "exclude_list",
+        };
         auto &eobj=elem.get_obj();
         source_type type=JSON::enum_opt(eobj,"type",
                                         {
@@ -127,6 +128,68 @@ static source_t mksrc(const JSON::Element &elem,const std::string &name,std::vec
     }
 } catch(JSON::JSON_Exception &e){
     throw JSON::JSON_Exception("In Source Array "+Util::quote_str_single(name)+": In Index #"+std::to_string(i)+": "+e.msg_top);
+}
+
+static std::optional<std::string> mkinc(const JSON::Element &elem,const std::string &name,std::vector<std::string> &warnings_out,size_t i) try {
+    if(elem.is_str()){
+        return elem.get_str();
+    }else if(elem.is_obj()){
+        std::vector<std::string> valid_keys {
+            "type",
+        };
+        enum types {
+            SWITCH,
+        };
+        auto &eobj=elem.get_obj();
+        types type=JSON::enum_nonopt<types>(eobj,"type", { {"switch",SWITCH}, });
+        switch(type){
+        case SWITCH:{
+                enum conditions{
+                    PLATFORM,
+                };
+                conditions cond=JSON::enum_nonopt<conditions>(eobj,"condition", { {"platform",PLATFORM}, });
+                JSON::object_t cases=JSON::obj_nonopt(eobj,"cases");
+                switch(cond){
+                case PLATFORM:
+                    return JSON::str_opt(cases,CUR_PLATFORM);
+                default:
+                    throw std::runtime_error("invalid include target condition");
+                }
+            }
+        default:
+            throw std::runtime_error("invalid include target type");
+        }
+    }else{
+        throw JSON::JSON_Exception(std::vector<std::string>{"String","Object"},elem.type_name());
+    }
+} catch(JSON::JSON_Exception &e){
+    throw JSON::JSON_Exception("In Target Array "+Util::quote_str_single(name)+": In Index #"+std::to_string(i)+": "+e.msg_top);
+}
+
+static std::vector<std::string> mkinclist(const JSON::array_t &arr,const std::string &name,std::vector<std::string> &warnings_out){
+    std::vector<std::string> slist;
+    slist.reserve(arr.size());
+    size_t n=0;
+    for(const auto &elem:arr){
+        auto s=mkinc(elem,name,warnings_out,n);
+        if(s){
+            slist.push_back(*s);
+        }
+        n++;
+    }
+    return slist;
+}
+
+static std::vector<std::string> inclist_opt(const JSON::object_t &obj,const std::string &name,std::vector<std::string> &warnings_out){
+    auto it=obj.find(name);
+    if(it!=obj.end()) {
+        if(!it->second.is_arr()){
+            throw JSON::JSON_Exception("In Include Array "+Util::quote_str_single(name)+": ","Array",it->second.type_name());
+        }
+        return mkinclist(it->second.get_arr(),name,warnings_out);
+    } else {
+        return {};
+    }
 }
 
 static link_order_t mklinkorder(const JSON::object_t &obj,const std::string &name,std::vector<std::string> &warnings_out,size_t i) try {
@@ -209,7 +272,7 @@ static std::vector<source_t> mksrclist(const JSON::array_t &arr,const std::strin
 
 Targets::target::target(const JSON::object_t &tg,std::string name,std::vector<std::string> &warnings_out) :
 sources(srclist_opt(tg,"sources",warnings_out)),
-includes(JSON::strlist_opt(tg,"include")),
+includes(inclist_opt(tg,"include",warnings_out)),
 defines_all(JSON::strlist_opt(tg,"defines_all")),
 defines_asm(JSON::strlist_opt(tg,"defines_asm")),
 defines_c_cpp(JSON::strlist_opt(tg,"defines_c_cpp")),

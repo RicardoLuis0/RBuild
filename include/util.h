@@ -11,7 +11,11 @@
 
 #define __PP_JOIN(a,b) a##b
 #define PP_JOIN(a,b) __PP_JOIN(a,b)
-
+#if defined(__linux__)
+    #define CUR_PLATFORM "linux"
+#elif defined(_WIN32)
+    #define CUR_PLATFORM "windows"
+#endif
 inline std::string operator"" _s(const char * s,size_t n){
     return {s,n};
 }

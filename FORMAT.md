@@ -50,6 +50,31 @@ A source file/folder can be either a string or a source object. If is an object,
 
 The target will inherit the properties of any other targets specified in the `includes` property.
 
+#### Include Switches
+
+To specify an include switch, a JSON Object must be used as an include target, instead of a string.
+
+It must have a `type` property with the value of `switch`, a valid `condition` property, and a `cases` property, which defines which specific target to include based on the value of the condition.
+
+Supported conditions are:
+* `platform`: The platform that the target is being built for.
+
+Example:
+```json
+"include":[
+    "common_all",
+    {
+        "type":"switch",
+        "condition":"platform",
+        "cases":{
+            "linux":"common_linux",
+            "windows":"common_windows"
+        }
+    }
+]
+```
+
+
 ### Compiler Properties
 
 The `flags_*` properties speficy the flags to be passed to the compilers, each string in the array will be passed as a single argument, no manual escaping is necessary.

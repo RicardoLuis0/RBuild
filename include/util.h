@@ -4,6 +4,8 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <atomic>
+#include <thread>
 #include <type_traits>
 #include <filesystem>
 
@@ -207,9 +209,24 @@ namespace Util {
         return Util::map(v,&std::string::c_str);
     }
     
-    struct redirect_data {
+    void print_sync(std::string s);
+    
+    class redirect_data { // should be saved on long-living memory (heap/global)
+    private:
+        std::atomic<bool> running;
+        std::atomic<bool> except;
+        std::exception_ptr e;
+        static void thread_entry(redirect_data*);
+        void thread_main();
+    public:
+        redirect_data();
+        redirect_data(redirect_data&& other);
+        void start();
+        void stop();
+        
         std::string s_stdout;
         std::string s_stderr;
+        std::thread t;
     };
     
     int run_noexcept(const std::string &program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&)=nullptr,bool silent=false,redirect_data * redir_data=nullptr) noexcept;

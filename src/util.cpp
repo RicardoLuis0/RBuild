@@ -228,6 +228,14 @@ namespace Util {
         }
     }
     
+    std::mutex print_mutex;
+    
+    void print_sync(std::string s){
+        std::lock_guard g(print_mutex);
+        std::cout<<s;
+        
+    }
+    
     int run(std::string program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&),bool silent,redirect_data * redir_data){
         if(redir_data){
             throw std::runtime_error("output redirections unimplemented");
@@ -240,7 +248,7 @@ namespace Util {
             std::vector<const char *> args(get_cstrs(args_v));
             args.push_back(nullptr);
             pid_t pid;
-            if(!silent)std::cout<<program<<" "<<join(map(args_in,&quote_str_double))<<"\n";
+            if(!silent)print_sync(program+" "+join(map(args_in,&quote_str_double))+"\n");//std::cout<<program<<" "<<join(map(args_in,&quote_str_double))<<"\n";
             if(int err=posix_spawnp(&pid,program.c_str(),NULL,NULL,const_cast<char*const*>(args.data()),environ);err==0){
                 int status;
                 waitpid(pid,&status,0);
@@ -269,7 +277,7 @@ namespace Util {
                         throw std::runtime_error("Running '"+program+"': Command line too long, is "+std::to_string(args.size())+", max "+std::to_string(CREATEPROCESS_CMD_MAX));
                     }
                 }
-                if(!silent)std::cout<<program<<" "<<join(map(args_in,&quote_str_double))<<"\n";
+                if(!silent)print_sync(program+" "+join(map(args_in,&quote_str_double))+"\n");//std::cout<<program<<" "<<join(map(args_in,&quote_str_double))<<"\n";
                 if(!CreateProcessA(NULL,args.data(),NULL,NULL,false,0,NULL,NULL,&si,&pi)){
                     throw std::runtime_error("Running '"+program+"': CreateProcessA: "+Win32ErrStr(GetLastError()));
                 }
@@ -304,6 +312,47 @@ namespace Util {
     void remove_tmpfile(){
         if(tmpfile_init){
             remove(tmpfile_name.c_str());
+        }
+    }
+    redirect_data::redirect_data():running(false){
+        
+    }
+    
+    redirect_data::redirect_data(redirect_data&& other):redirect_data(){
+        if(other.running){
+            throw std::runtime_error("Cannot move active 'redirect_data'");
+        }
+        s_stdout=other.s_stdout;
+        s_stderr=other.s_stderr;
+    }
+    
+    void redirect_data::thread_main() try {
+        while(running){
+            //TODO
+            std::this_thread::yield();
+        }
+    } catch(...){
+        e=std::current_exception();
+        except=true;
+    }
+    
+    void redirect_data::thread_entry(redirect_data * d){
+        d->thread_main();
+    }
+    
+    void redirect_data::start(){
+        if(running) stop();
+        running=true;
+        t=std::thread(thread_entry,this);
+    }
+    
+    void redirect_data::stop(){
+        if(running){
+            running=false;
+            t.join();
+            if(except){
+                std::rethrow_exception(e);
+            }
         }
     }
     

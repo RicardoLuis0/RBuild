@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <filesystem>
+#include "util.h"
 
 namespace drivers {
     
@@ -13,7 +14,7 @@ namespace drivers {
         public:
             virtual ~driver()=0;
             virtual bool needs_compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out)=0;
-            virtual bool compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out,const std::vector<std::string> &extra_flags)=0;
+            virtual bool compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out,const std::vector<std::string> &extra_flags,Util::redirect_data * rd)=0;
         };
         
         class base : public driver {
@@ -26,14 +27,14 @@ namespace drivers {
         public:
             base(const std::string &compiler,const std::vector<std::string> &flags,const std::vector<std::string> &defines);
             virtual bool needs_compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out) override;
-            virtual bool compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out,const std::vector<std::string> &extra_flags) override;
+            virtual bool compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out,const std::vector<std::string> &extra_flags,Util::redirect_data * rd) override;
             
         };
         
         class generic : public base {
         public:
             using base::base;
-            virtual bool compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out,const std::vector<std::string> &extra_flags) override;
+            virtual bool compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out,const std::vector<std::string> &extra_flags,Util::redirect_data * rd) override;
         };
         
         class gas final : public generic {
@@ -41,7 +42,7 @@ namespace drivers {
             virtual void calc_defines() override;
         public:
             using generic::generic;
-            virtual bool compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out,const std::vector<std::string> &extra_flags) override;
+            virtual bool compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out,const std::vector<std::string> &extra_flags,Util::redirect_data * rd) override;
         };
         
         class gnu : public generic {
@@ -50,13 +51,13 @@ namespace drivers {
                 std::filesystem::path get_out(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &src_file);
                 using generic::generic;
                 virtual bool needs_compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out) override;
-                virtual bool compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out,const std::vector<std::string> &extra_args) override;
+                virtual bool compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out,const std::vector<std::string> &extra_args,Util::redirect_data * rd) override;
         };
         
         class nasm final : public gnu {
         public:
             using gnu::gnu;
-            virtual bool compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out,const std::vector<std::string> &extra_flags) override;
+            virtual bool compile(const std::filesystem::path &working_path,const std::filesystem::path &src_base,const std::filesystem::path &file_in,const std::filesystem::path &file_out,const std::vector<std::string> &extra_flags,Util::redirect_data * rd) override;
         };
         
     }

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <thread>
+#include <queue>
 
 Project::Project(const JSON::object_t &project,std::vector<std::string> &warnings_out) :
     targets(project.at("targets").get_obj(),warnings_out),
@@ -154,6 +155,89 @@ static ssize_t get_link_order(Targets::target &target,const std::filesystem::pat
     return 0;
 }
 
+namespace {
+    struct job_t {
+        drivers::compiler::driver * driver;
+        std::filesystem::path working_path;
+        std::filesystem::path src_base;
+        std::filesystem::path src;
+        std::filesystem::path src_out;
+        std::vector<std::string> extra_args;
+        Util::redirect_data output;
+        std::atomic<bool> finished;
+        std::atomic<bool> success;
+        static void run_job(job_t * data) try {
+            data->success=data->driver->compile(data->working_path,data->src_base,data->src,data->src_out,data->extra_args,&data->output);
+            data->output.stop();
+            data->finished=true;
+        } catch (std::exception &e) {
+            try {
+                data->output.stop();
+            }catch (std::exception &e2){
+                data->output.s_stderr+="\nUnexpected Exception while stopping output thread: "+Util::quote_str_single(e2.what())+"\n";
+            }
+            data->output.s_stderr+="\nUnexpected Exception while compiling: "+Util::quote_str_single(e.what())+"\n";
+            data->success=false;
+            data->finished=true;
+        }
+        static std::vector<std::unique_ptr<job_t>> run_jobs(std::queue<std::unique_ptr<job_t>> &jobs){
+            bool ok=true;
+            std::unique_ptr<job_t> running_jobs_data[num_jobs];
+            std::thread running_jobs_thread[num_jobs];
+            
+            std::vector<std::unique_ptr<job_t>> finished_jobs;
+            
+            while(ok&&jobs.size()>0){
+                bool vacant_jobs=false;
+                int first_vacant=0;
+                int vacant_count=0;
+                for(int i=0;i<num_jobs;i++){
+                    if(running_jobs_data[i]){
+                        if(running_jobs_data[i]->finished){
+                            running_jobs_thread[i].join();
+                            if(!running_jobs_data[i]->success)ok=false;
+                            finished_jobs.emplace_back(std::move(running_jobs_data[i]));
+                            running_jobs_data[i]=nullptr;
+                            if(!vacant_jobs){
+                                first_vacant=i;
+                                vacant_jobs=true;
+                            }
+                            vacant_count++;
+                        }
+                    }else{
+                        if(!vacant_jobs){
+                            first_vacant=i;
+                            vacant_jobs=true;
+                        }
+                        vacant_count++;
+                    }
+                }
+                if(vacant_jobs&&ok){
+                    for(int i=first_vacant;i<num_jobs&&vacant_count>0;i++){
+                        if(!running_jobs_data[i]){
+                            running_jobs_data[i]=std::move(jobs.front());
+                            jobs.pop();
+                            running_jobs_thread[i]=std::thread(job_t::run_job,running_jobs_data[i].get());
+                            vacant_count--;
+                        }
+                    }
+                }
+                std::this_thread::yield();
+            }
+            
+            for(int i=0;i<num_jobs;i++){
+                if(running_jobs_data[i]){
+                    running_jobs_thread[i].join();
+                    if(!running_jobs_data[i]->success)ok=false;
+                    finished_jobs.emplace_back(std::move(running_jobs_data[i]));
+                    running_jobs_data[i]=nullptr;
+                }
+            }
+            return finished_jobs;
+        }
+    };
+}
+
 bool Project::build_target(const std::string & target_name) try{
     using std::filesystem::path;
     
@@ -240,14 +324,65 @@ bool Project::build_target(const std::string & target_name) try{
         }
     }
     
+    std::cout<<"\n";
+    
     if(num_jobs>0){
+        std::queue<std::unique_ptr<job_t>> jobs;
         
         #define COMPILE_JOB(lang)\
-            throw std::runtime_error("compilation jobs not currently implemented");
+            for(const auto & src : PP_JOIN(sources_,lang) ){\
+                path src_out (get_obj_path(working_path,src_base,src));\
+                bool needs_compile=PP_JOIN(lang,_compiler_driver)->needs_compile(working_path,src_base,src,src_out);\
+                if(needs_compile){\
+                    jobs.push(std::make_unique<job_t>(\
+                                        PP_JOIN(lang,_compiler_driver).get(),\
+                                        working_path,\
+                                        src_base,\
+                                        src,\
+                                        src_out,\
+                                        std::vector<std::string>{},\
+                                        Util::redirect_data{},\
+                                        false,\
+                                        false\
+                                  ));\
+                }\
+                 \
+                /*
+                 * files need to be added early to the linking list
+                 * to ensure linking order is the same between
+                 * job builds and non-job builds
+                 *
+                 */ \
+                    \
+                linker_driver->add_file(get_link_order(target,out_base,src_out),src_out);\
+            }
         
         COMPILE_JOB(c);
         COMPILE_JOB(cpp);
         COMPILE_JOB(asm);
+        
+        std::vector<std::unique_ptr<job_t>> finished_jobs(job_t::run_jobs(jobs));
+        
+        bool ok=true;
+        
+        std::vector<std::string> failed_files;
+        
+        for(auto &job:finished_jobs){
+            std::string fname("'"+std::filesystem::relative(job->src,job->src_base).string()+"'");
+            if(!(job->output.s_stdout.empty()&&job->output.s_stderr.empty())){
+                std::cout<<"\n----------\n\n\nWhile compiling "<<fname<<":\n";
+                std::cout<<job->output.s_stdout<<"\n";
+                std::cerr<<job->output.s_stderr<<"\n";
+            }
+            if(!job->success){
+                failed_files.push_back(fname);
+                ok=false;
+            }
+        }
+        
+        if(!ok){
+            throw std::runtime_error("Failed to compile "+Util::join(failed_files,", "));
+        }
         
         #undef COMPILE_JOB
         
@@ -257,7 +392,7 @@ bool Project::build_target(const std::string & target_name) try{
             for(const auto & src : PP_JOIN(sources_,lang) ){\
                 path src_out (get_obj_path(working_path,src_base,src));\
                 if(!PP_JOIN(lang,_compiler_driver)->needs_compile(working_path,src_base,src,src_out)\
-                  ||PP_JOIN(lang,_compiler_driver)->compile(working_path,src_base,src,src_out,{})){\
+                  ||PP_JOIN(lang,_compiler_driver)->compile(working_path,src_base,src,src_out,{},nullptr)){\
                     linker_driver->add_file(get_link_order(target,out_base,src_out),src_out);\
                 }else{\
                     throw std::runtime_error("Failed to compile "+Util::quote_str_single(std::filesystem::relative(src).string()));\

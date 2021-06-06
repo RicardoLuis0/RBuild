@@ -8,6 +8,7 @@
 #include <memory>
 #include <mutex>
 
+
 #ifdef __unix__
     #include <unistd.h>
     #include <spawn.h>
@@ -16,6 +17,7 @@
 #elif defined(_WIN32)
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
+    #include <rpc.h>
     #include <shlobj.h>
     
     static std::string Win32ErrStr(DWORD err){
@@ -34,7 +36,6 @@
         args_v.reserve(args_in.size()+1);
         args_v.push_back(Util::quote_str_double(path));
         std::transform(std::begin(args_in),std::end(args_in),std::back_inserter(args_v),&Util::quote_str_double);
-        //std::copy(std::begin(args_in),std::end(args_in),std::back_inserter(args_v));
         return Util::join(args_v);
     }
     
@@ -236,10 +237,10 @@ namespace Util {
     }
     
     int run(std::string program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&),bool silent,redirect_data * redir_data){
-        if(redir_data){
-            throw std::runtime_error("output redirections unimplemented");
-        }
         #if defined(__unix__)
+            if(redir_data){
+                throw std::runtime_error("output redirections unimplemented");
+            }
             std::vector<std::string> args_v;
             args_v.reserve(std::size(args_in)+1);
             args_v.push_back(program);
@@ -247,7 +248,7 @@ namespace Util {
             std::vector<const char *> args(get_cstrs(args_v));
             args.push_back(nullptr);
             pid_t pid;
-            if(!silent)print_sync(program+" "+join(map(args_in,&quote_str_double))+"\n");//std::cout<<program<<" "<<join(map(args_in,&quote_str_double))<<"\n";
+            if(!silent)print_sync(program+" "+join(map(args_in,&quote_str_double))+"\n");
             if(int err=posix_spawnp(&pid,program.c_str(),NULL,NULL,const_cast<char*const*>(args.data()),environ);err==0){
                 int status;
                 waitpid(pid,&status,0);
@@ -263,8 +264,14 @@ namespace Util {
             bool path_found=false;
             std::string path=resolve_path(program,path_found);
             if(path_found){
-                STARTUPINFO si={};
+                STARTUPINFOA si={};
                 PROCESS_INFORMATION pi={};
+                if(redir_data){
+                    si.dwFlags|=STARTF_USESTDHANDLES;
+                    si.hStdInput=redir_data->hStdIn;
+                    si.hStdOutput=redir_data->hStdOut;
+                    si.hStdError=redir_data->hStdErr;
+                }
                 std::string args=build_cmdline(path,args_in);
                 if(args.size()>=CREATEPROCESS_CMD_MAX){
                     if(alternate_cmdline){
@@ -276,8 +283,11 @@ namespace Util {
                         throw std::runtime_error("Running '"+program+"': Command line too long, is "+std::to_string(args.size())+", max "+std::to_string(CREATEPROCESS_CMD_MAX));
                     }
                 }
-                if(!silent)print_sync(program+" "+join(map(args_in,&quote_str_double))+"\n");//std::cout<<program<<" "<<join(map(args_in,&quote_str_double))<<"\n";
-                if(!CreateProcessA(NULL,args.data(),NULL,NULL,false,0,NULL,NULL,&si,&pi)){
+                if(!silent)print_sync(program+" "+join(map(args_in,&quote_str_double))+"\n");
+                if(redir_data){
+                    redir_data->start();
+                }
+                if(!CreateProcessA(nullptr,args.data(),nullptr,nullptr,redir_data!=nullptr,0,nullptr,nullptr,&si,&pi)){
                     throw std::runtime_error("Running '"+program+"': CreateProcessA: "+Win32ErrStr(GetLastError()));
                 }
                 WaitForSingleObject(pi.hProcess,INFINITE);
@@ -307,14 +317,83 @@ namespace Util {
     }
     
     static void remove_tmpfile() __attribute__((destructor));
-
+    
     void remove_tmpfile(){
         if(tmpfile_init){
             remove(tmpfile_name.c_str());
         }
     }
+    
     redirect_data::redirect_data():running(false){
-        
+        #if defined(__unix__)
+            //TODO
+        #elif defined(_WIN32)
+            {
+                UUID uuid;
+                RPC_STATUS st=UuidCreate(&uuid);
+                if(!(st==RPC_S_OK||st==RPC_S_UUID_LOCAL_ONLY)){//not OK
+                    throw std::runtime_error("redirect_data: UuidCreate failed");
+                }
+                RPC_CSTR uuid_rcs;
+                UuidToStringA(&uuid,&uuid_rcs);
+                sUUID=std::string(reinterpret_cast<const char *>(uuid_rcs));
+                RpcStringFreeA(&uuid_rcs);
+            }
+            
+            SECURITY_ATTRIBUTES sa={};
+            
+            sa.nLength=sizeof(sa);
+            sa.bInheritHandle=true;
+            
+            std::string common_name("\\\\.\\pipe\\");
+            std::string stdin_name(common_name+"stdin."+sUUID);
+            std::string stdout_name(common_name+"stdout."+sUUID);
+            std::string stderr_name(common_name+"stderr."+sUUID);
+            if((hStdInPipe=CreateNamedPipeA(stdin_name.c_str(),PIPE_ACCESS_DUPLEX,PIPE_TYPE_BYTE|PIPE_READMODE_BYTE|PIPE_NOWAIT|PIPE_REJECT_REMOTE_CLIENTS,PIPE_UNLIMITED_INSTANCES,256,256,0,&sa))==INVALID_HANDLE_VALUE){
+                throw std::runtime_error("redirect_data: CreateNamedPipeA hStdInPipe failed: "+Win32ErrStr(GetLastError()));
+            }
+            if((hStdOutPipe=CreateNamedPipeA(stdout_name.c_str(),PIPE_ACCESS_DUPLEX,PIPE_TYPE_BYTE|PIPE_READMODE_BYTE|PIPE_NOWAIT|PIPE_REJECT_REMOTE_CLIENTS,PIPE_UNLIMITED_INSTANCES,256,256,0,&sa))==INVALID_HANDLE_VALUE){
+                CloseHandle(hStdInPipe);
+                throw std::runtime_error("redirect_data: CreateNamedPipeA hStdOutPipe failed: "+Win32ErrStr(GetLastError()));
+            }
+            if((hStdErrPipe=CreateNamedPipeA(stderr_name.c_str(),PIPE_ACCESS_DUPLEX,PIPE_TYPE_BYTE|PIPE_READMODE_BYTE|PIPE_NOWAIT|PIPE_REJECT_REMOTE_CLIENTS,PIPE_UNLIMITED_INSTANCES,256,256,0,&sa))==INVALID_HANDLE_VALUE){
+                CloseHandle(hStdInPipe);
+                CloseHandle(hStdOutPipe);
+                throw std::runtime_error("redirect_data: CreateNamedPipeA hStdErrPipe failed: "+Win32ErrStr(GetLastError()));
+            }
+            if((hStdIn=CreateFile(stdin_name.c_str(),GENERIC_READ|GENERIC_WRITE,0,&sa,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr))==INVALID_HANDLE_VALUE){
+                CloseHandle(hStdInPipe);
+                CloseHandle(hStdOutPipe);
+                CloseHandle(hStdErrPipe);
+                throw std::runtime_error("redirect_data: CreateFile hStdIn failed: "+Win32ErrStr(GetLastError()));
+            }
+            if((hStdOut=CreateFile(stdout_name.c_str(),GENERIC_READ|GENERIC_WRITE,0,&sa,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr))==INVALID_HANDLE_VALUE){
+                CloseHandle(hStdInPipe);
+                CloseHandle(hStdOutPipe);
+                CloseHandle(hStdErrPipe);
+                CloseHandle(hStdIn);
+                throw std::runtime_error("redirect_data: CreateFile hStdIn failed: "+Win32ErrStr(GetLastError()));
+            }
+            if((hStdErr=CreateFile(stderr_name.c_str(),GENERIC_READ|GENERIC_WRITE,0,&sa,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr))==INVALID_HANDLE_VALUE){
+                CloseHandle(hStdInPipe);
+                CloseHandle(hStdOutPipe);
+                CloseHandle(hStdErrPipe);
+                CloseHandle(hStdIn);
+                CloseHandle(hStdOut);
+                throw std::runtime_error("redirect_data: CreateFile hStdIn failed: "+Win32ErrStr(GetLastError()));
+            }
+            try {
+                //throw std::runtime_error("redirect_data::redirect_data unimplemented");
+            } catch(...){
+                CloseHandle(hStdInPipe);
+                CloseHandle(hStdOutPipe);
+                CloseHandle(hStdErrPipe);
+                CloseHandle(hStdIn);
+                CloseHandle(hStdOut);
+                CloseHandle(hStdErr);
+                throw;
+            }
+        #endif
     }
     
     redirect_data::redirect_data(redirect_data&& other):redirect_data(){
@@ -323,11 +402,76 @@ namespace Util {
         }
         s_stdout=other.s_stdout;
         s_stderr=other.s_stderr;
+        #if defined(__unix__)
+            //TODO
+        #elif defined(_WIN32)
+            hStdInPipe=other.hStdInPipe;
+            other.hStdInPipe=nullptr;
+            hStdOutPipe=other.hStdOutPipe;
+            other.hStdOutPipe=nullptr;
+            hStdErrPipe=other.hStdErrPipe;
+            other.hStdErrPipe=nullptr;
+            hStdIn=other.hStdIn;
+            other.hStdIn=nullptr;
+            hStdOut=other.hStdOut;
+            other.hStdOut=nullptr;
+            hStdErr=other.hStdErr;
+            other.hStdErr=nullptr;
+        #endif
+    }
+    
+    redirect_data::~redirect_data(){
+        #if defined(__unix__)
+            //TODO
+        #elif defined(_WIN32)
+            if(hStdIn){
+                CloseHandle(hStdIn);
+            }
+            if(hStdOut){
+                CloseHandle(hStdOut);
+            }
+            if(hStdErr){
+                CloseHandle(hStdErr);
+            }
+            if(hStdInPipe){
+                CloseHandle(hStdInPipe);
+            }
+            if(hStdOutPipe){
+                CloseHandle(hStdOutPipe);
+            }
+            if(hStdErrPipe){
+                CloseHandle(hStdErrPipe);
+            }
+        #endif
     }
     
     void redirect_data::thread_main() try {
         while(running){
-            //TODO
+            #if defined(__unix__)
+                //TODO
+            #elif defined(_WIN32)
+                DWORD num;
+                if(!PeekNamedPipe(hStdOutPipe,nullptr,0,nullptr,&num,nullptr)){
+                    throw std::runtime_error("redirect_data::thread_main: PeekNamedPipe hStdInR failed: "+Win32ErrStr(GetLastError()));
+                }
+                if(num>0){
+                    char buf[num+1];
+                    DWORD numread;
+                    ReadFile(hStdOutPipe,buf,num,&numread,nullptr);
+                    buf[numread]=0;
+                    s_stdout+=std::string(buf);
+                }
+                if(!PeekNamedPipe(hStdErrPipe,nullptr,0,nullptr,&num,nullptr)){
+                    throw std::runtime_error("redirect_data::thread_main: PeekNamedPipe hStdInR failed: "+Win32ErrStr(GetLastError()));
+                }
+                if(num>0){
+                    char buf[num+1];
+                    DWORD numread;
+                    ReadFile(hStdErrPipe,buf,num,&numread,nullptr);
+                    buf[numread]=0;
+                    s_stderr+=std::string(buf);
+                }
+            #endif
             std::this_thread::yield();
         }
     } catch(...){

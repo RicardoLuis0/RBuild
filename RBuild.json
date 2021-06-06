@@ -7,7 +7,27 @@
     "compiler_all":"gcc",
     "linker":"gcc",
     "targets":{
+        "windows_common":{
+            "linker_libs":[
+                "-lrpcrt4",
+            ],
+        },
+        "linux_common":{
+            "linker_libs":[
+                "-lpthread",
+            ],
+        },
         "common":{
+            "include":[
+                {
+                    "type":"switch",
+                    "condition":"platform",
+                    "cases":{
+                        "windows":"windows_common",
+                        "linux":"linux_common",
+                    },
+                },
+            ],
             "sources":[
                 {
                     "name":"src",

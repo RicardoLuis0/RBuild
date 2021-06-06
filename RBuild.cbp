@@ -53,6 +53,7 @@
 		</Compiler>
 		<Linker>
 			<Add option="-m64" />
+			<Add option="-lrpcrt4" />
 		</Linker>
 		<Unit filename="include/args.h" />
 		<Unit filename="include/drivers.h" />

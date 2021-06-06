@@ -225,12 +225,24 @@ namespace Util {
     public:
         redirect_data();
         redirect_data(redirect_data&& other);
+        ~redirect_data();
         void start();
         void stop();
         
         std::string s_stdout;
         std::string s_stderr;
         std::thread t;
+        #if defined(__unix__)
+            //TODO
+        #elif defined(_WIN32)
+            std::string sUUID;
+            void * hStdInPipe;
+            void * hStdOutPipe;
+            void * hStdErrPipe;
+            void * hStdIn;
+            void * hStdOut;
+            void * hStdErr;
+        #endif
     };
     
     int run_noexcept(const std::string &program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&)=nullptr,bool silent=false,redirect_data * redir_data=nullptr) noexcept;

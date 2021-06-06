@@ -213,7 +213,7 @@ namespace {
                     }
                 }
                 if(vacant_jobs&&ok){
-                    for(int i=first_vacant;i<num_jobs&&vacant_count>0;i++){
+                    for(int i=first_vacant;i<num_jobs&&vacant_count>0&&jobs.size()>0;i++){
                         if(!running_jobs_data[i]){
                             running_jobs_data[i]=std::move(jobs.front());
                             jobs.pop();

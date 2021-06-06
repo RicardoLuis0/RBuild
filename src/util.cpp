@@ -324,9 +324,9 @@ namespace Util {
         }
     }
 
-    redirect_data::redirect_data():running(false),close_fds(false){
+    redirect_data::redirect_data():running(false){
         #if defined(__unix__)
-            
+            close_fds=false;
             if(pipe2(p_stdin,O_NONBLOCK)!=0){
                 throw std::runtime_error("stdin pipe creation failed: "+std::string(strerror(errno)));
             }

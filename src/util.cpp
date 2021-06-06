@@ -233,7 +233,6 @@ namespace Util {
     void print_sync(std::string s){
         std::lock_guard g(print_mutex);
         std::cout<<s;
-        
     }
     
     int run(std::string program,const std::vector<std::string> &args_in,std::string (*alternate_cmdline)(const std::string&,const std::vector<std::string>&),bool silent,redirect_data * redir_data){

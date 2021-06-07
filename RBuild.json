@@ -11,11 +11,13 @@
             "linker_libs":[
                 "-lrpcrt4",
             ],
+            "include_only":true
         },
         "linux_common":{
             "linker_libs":[
                 "-lpthread",
             ],
+            "include_only":true
         },
         "common":{
             "include":[

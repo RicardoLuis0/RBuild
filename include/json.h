@@ -213,8 +213,6 @@ namespace JSON {
                 }
                 it=it2;
                 name=name2;
-            } else {
-                return {};
             }
         }
         if(err){

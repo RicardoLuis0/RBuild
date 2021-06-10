@@ -323,7 +323,7 @@ namespace Util {
             remove(tmpfile_name.c_str());
         }
     }
-
+    
     redirect_data::redirect_data():running(false){
         #if defined(__unix__)
             close_fds=false;

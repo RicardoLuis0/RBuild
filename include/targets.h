@@ -64,6 +64,7 @@ public:
         
         std::optional<std::string> binary_folder_override;
         std::optional<std::string> project_binary_override;
+        std::optional<std::string> target_folder_override;
         
         bool include_only;
         

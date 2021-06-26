@@ -316,7 +316,7 @@ bool Project::build_target(const std::string & target_name) try{
         std::vector<path> sources_asm(FILTER_EXTENSIONS(asm_extensions));
     #undef FILTER_EXTENSIONS
     
-    path working_path(wf_path/target_name);
+    path working_path(wf_path/(target.target_folder_override?*target.target_folder_override:target_name));
     
     for(const Targets::target::link_order_t &lo_entry:target.linker_order){
         if(lo_entry.type==Targets::target::LINK_EXTRA){

@@ -51,6 +51,7 @@
             } ],
             "binary_folder_override": optional string,
             "project_binary_override": optional string,
+            "target_folder_override": optional string,
             "include_only": optional bool default=false,
         }
     },

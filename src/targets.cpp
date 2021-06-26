@@ -297,6 +297,7 @@ linker_libs(JSON::strlist_opt(tg,"linker_libs")),
 linker_order(linkorderlist_opt(tg,"linker_order",warnings_out)),
 binary_folder_override(JSON::str_opt(tg,"binary_folder_override")),
 project_binary_override(JSON::str_opt(tg,"project_binary_override")),
+target_folder_override(JSON::str_opt(tg,"target_folder_override")),
 include_only(JSON::bool_opt(tg,"include_only",false)) {
     static const std::string valid_keys[]{
         "sources",
@@ -316,6 +317,7 @@ include_only(JSON::bool_opt(tg,"include_only",false)) {
         "linker_order",
         "binary_folder_override",
         "project_binary_override",
+        "target_folder_override",
         "include_only",
     };
     for(auto &e:Util::filter_exclude(Util::keys(tg),Util::CArrayIteratorAdaptor(valid_keys))){
@@ -341,6 +343,7 @@ Targets::target& Targets::target::operator+=(const target& other) {
     linker_order.insert(linker_order.end(),other.linker_order.begin(),other.linker_order.end());
     if(!binary_folder_override&&other.binary_folder_override)binary_folder_override=*other.binary_folder_override;
     if(!project_binary_override&&other.project_binary_override)project_binary_override=*other.project_binary_override;
+    if(!target_folder_override&&other.target_folder_override)target_folder_override=*other.target_folder_override;
     return *this;
 }
 

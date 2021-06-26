@@ -327,36 +327,7 @@ namespace Util {
     redirect_data::redirect_data():running(false){
         #if defined(__unix__)
             close_fds=false;
-            if(pipe2(p_stdin,O_NONBLOCK)!=0){
-                throw std::runtime_error("stdin pipe creation failed: "+std::string(strerror(errno)));
-            }
-            if(pipe2(p_stdout,O_NONBLOCK)!=0){
-                close(p_stdin[0]);
-                close(p_stdin[1]);
-                throw std::runtime_error("stdout pipe creation failed: "+std::string(strerror(errno)));
-            }
-            if(pipe2(p_stderr,O_NONBLOCK)!=0){
-                close(p_stdin[0]);
-                close(p_stdin[1]);
-                close(p_stdout[0]);
-                close(p_stdout[1]);
-                throw std::runtime_error("stdout pipe creation failed: "+std::string(strerror(errno)));
-            }
-            
-            posix_spawn_file_actions_init(&f_acts);
-            
-            posix_spawn_file_actions_addclose(&f_acts,p_stdin[1]);
-            posix_spawn_file_actions_addclose(&f_acts,p_stdout[0]);
-            posix_spawn_file_actions_addclose(&f_acts,p_stderr[0]);
-            posix_spawn_file_actions_adddup2(&f_acts,p_stdin[0],STDIN_FILENO);
-            posix_spawn_file_actions_adddup2(&f_acts,p_stdout[1],STDOUT_FILENO);
-            posix_spawn_file_actions_adddup2(&f_acts,p_stderr[1],STDERR_FILENO);
-            posix_spawn_file_actions_addclose(&f_acts,p_stdin[0]);
-            posix_spawn_file_actions_addclose(&f_acts,p_stdout[1]);
-            posix_spawn_file_actions_addclose(&f_acts,p_stderr[1]);
-            
-            close_fds=true;
-            
+            initialized=false;
         #elif defined(_WIN32)
             {
                 UUID uuid;
@@ -440,6 +411,8 @@ namespace Util {
             p_stdout[1]=other.p_stdout[1];
             p_stderr[0]=other.p_stderr[0];
             p_stderr[1]=other.p_stderr[1];
+            initialized=other.initialized;
+            close_fds=other.close_fds;
             other.close_fds=false;
         #elif defined(_WIN32)
             hStdInPipe=other.hStdInPipe;
@@ -540,6 +513,40 @@ namespace Util {
     }
     
     void redirect_data::start(){
+        #if defined(__unix__)
+            if(!initialized){
+                if(pipe2(p_stdin,O_NONBLOCK)!=0){
+                    throw std::runtime_error("stdin pipe creation failed: "+std::string(strerror(errno)));
+                }
+                if(pipe2(p_stdout,O_NONBLOCK)!=0){
+                    close(p_stdin[0]);
+                    close(p_stdin[1]);
+                    throw std::runtime_error("stdout pipe creation failed: "+std::string(strerror(errno)));
+                }
+                if(pipe2(p_stderr,O_NONBLOCK)!=0){
+                    close(p_stdin[0]);
+                    close(p_stdin[1]);
+                    close(p_stdout[0]);
+                    close(p_stdout[1]);
+                    throw std::runtime_error("stdout pipe creation failed: "+std::string(strerror(errno)));
+                }
+                
+                posix_spawn_file_actions_init(&f_acts);
+                
+                posix_spawn_file_actions_addclose(&f_acts,p_stdin[1]);
+                posix_spawn_file_actions_addclose(&f_acts,p_stdout[0]);
+                posix_spawn_file_actions_addclose(&f_acts,p_stderr[0]);
+                posix_spawn_file_actions_adddup2(&f_acts,p_stdin[0],STDIN_FILENO);
+                posix_spawn_file_actions_adddup2(&f_acts,p_stdout[1],STDOUT_FILENO);
+                posix_spawn_file_actions_adddup2(&f_acts,p_stderr[1],STDERR_FILENO);
+                posix_spawn_file_actions_addclose(&f_acts,p_stdin[0]);
+                posix_spawn_file_actions_addclose(&f_acts,p_stdout[1]);
+                posix_spawn_file_actions_addclose(&f_acts,p_stderr[1]);
+                
+                close_fds=true;
+                initialized=true;
+            }
+        #endif // __unix__
         if(running) stop();
         running=true;
         t=std::thread(thread_entry,this);
@@ -549,6 +556,20 @@ namespace Util {
         if(running){
             running=false;
             t.join();
+            #if defined(__unix__)
+                if(initialized){
+                    if(close_fds){
+                        close(p_stdin[0]);
+                        close(p_stdin[1]);
+                        close(p_stdout[0]);
+                        close(p_stdout[1]);
+                        close(p_stderr[0]);
+                        close(p_stderr[1]);
+                    }
+                    initialized=false;
+                    close_fds=false;
+                }
+            #endif // __unix__
             if(except){
                 std::rethrow_exception(e);
             }

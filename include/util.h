@@ -241,6 +241,7 @@ namespace Util {
         std::thread t;
         #if defined(__unix__)
             bool close_fds;
+            bool initialized;
             posix_spawn_file_actions_t f_acts;
             int p_stdin[2];
             int p_stdout[2];

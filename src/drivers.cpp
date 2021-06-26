@@ -192,24 +192,24 @@ namespace drivers {
         
     }
     
-    std::unique_ptr<compiler::driver> get_compiler(const std::string &name,compiler_lang lang,const std::vector<std::string> &flags,const std::vector<std::string> &defines){
+    std::unique_ptr<compiler::driver> get_compiler(const std::string &name,compiler_lang lang,const std::vector<std::string> &flags,const std::vector<std::string> &defines,const std::optional<std::string> &compiler_binary_override){
         switch(lang){
         case LANG_C:
         case LANG_CPP:
             if(name=="gcc"){
-                return std::make_unique<compiler::gnu>((lang==LANG_C?Args::namedArgOr("gcc_override","gcc"):Args::namedArgOr("gxx_override","g++")),flags,defines);
+                return std::make_unique<compiler::gnu>(compiler_binary_override?*compiler_binary_override:(lang==LANG_C?Args::namedArgOr("gcc_override","gcc"):Args::namedArgOr("gxx_override","g++")),flags,defines);
             }else if(name=="clang"){
-                return std::make_unique<compiler::gnu>((lang==LANG_C?Args::namedArgOr("clang_override","clang"):Args::namedArgOr("clangxx_override","clang++")),flags,defines);
+                return std::make_unique<compiler::gnu>(compiler_binary_override?*compiler_binary_override:(lang==LANG_C?Args::namedArgOr("clang_override","clang"):Args::namedArgOr("clangxx_override","clang++")),flags,defines);
             }else{
                 throw std::runtime_error("unknown compiler "+Util::quote_str_single(name));
             }
         case LANG_ASM:
             if(name=="gcc"||name=="clang"){
-                return std::make_unique<compiler::gnu>(name,flags,defines);
+                return std::make_unique<compiler::gnu>(compiler_binary_override?*compiler_binary_override:name,flags,defines);
             }else if(name=="as"){
-                return std::make_unique<compiler::gas>(name,flags,defines);
+                return std::make_unique<compiler::gas>(compiler_binary_override?*compiler_binary_override:name,flags,defines);
             }else if(name=="nasm"){
-                return std::make_unique<compiler::nasm>(name,flags,defines);
+                return std::make_unique<compiler::nasm>(compiler_binary_override?*compiler_binary_override:name,flags,defines);
             }else{
                 throw std::runtime_error("unknown compiler "+Util::quote_str_single(name));
             }
@@ -222,15 +222,15 @@ namespace drivers {
         __builtin_unreachable();
     }
     
-    std::unique_ptr<linker::driver> get_linker(const std::string &name,const std::vector<std::string> &flags,const std::vector<std::string> &libs){
+    std::unique_ptr<linker::driver> get_linker(const std::string &name,const std::vector<std::string> &flags,const std::vector<std::string> &libs,const std::optional<std::string> &linker_binary_override_c,const std::optional<std::string> &linker_binary_override_cpp,const std::optional<std::string> &linker_binary_override_other){
         if(name=="gcc"){
-            return std::make_unique<linker::gnu>(Args::namedArgOr("gcc_override","gcc"),Args::namedArgOr("gxx_override","g++"),flags,libs);
+            return std::make_unique<linker::gnu>(linker_binary_override_c?*linker_binary_override_c:Args::namedArgOr("gcc_override","gcc"),linker_binary_override_cpp?*linker_binary_override_cpp:Args::namedArgOr("gxx_override","g++"),flags,libs);
         }else if(name=="clang"){
-            return std::make_unique<linker::gnu>(Args::namedArgOr("clang_override","clang"),Args::namedArgOr("clangxx_override","clang++"),flags,libs);
+            return std::make_unique<linker::gnu>(linker_binary_override_c?*linker_binary_override_c:Args::namedArgOr("clang_override","clang"),linker_binary_override_cpp?*linker_binary_override_cpp:Args::namedArgOr("clangxx_override","clang++"),flags,libs);
         }else if(Util::contains(std::vector<std::string>{"ld","ld.gold","ld.lld"},name)){
-            return std::make_unique<linker::generic>(name,flags,libs);
+            return std::make_unique<linker::generic>(linker_binary_override_other?*linker_binary_override_other:name,flags,libs);
         }else if(Util::contains(std::vector<std::string>{"ar","llvm-ar"},name)){
-            return std::make_unique<linker::ar>(name,flags,libs);
+            return std::make_unique<linker::ar>(linker_binary_override_other?*linker_binary_override_other:name,flags,libs);
         }else{
             throw std::runtime_error("unknown linker "+Util::quote_str_single(name));
         }

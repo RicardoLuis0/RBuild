@@ -116,8 +116,8 @@ namespace drivers {
         LANG_ASM,
     };
     
-    std::unique_ptr<compiler::driver> get_compiler(const std::string &name,compiler_lang lang,const std::vector<std::string> &flags,const std::vector<std::string> &defines);
+    std::unique_ptr<compiler::driver> get_compiler(const std::string &name,compiler_lang lang,const std::vector<std::string> &flags,const std::vector<std::string> &defines,const std::optional<std::string> &compiler_binary_override=std::nullopt);
     
-    std::unique_ptr<linker::driver> get_linker(const std::string &name,const std::vector<std::string> &flags,const std::vector<std::string> &libs);
+    std::unique_ptr<linker::driver> get_linker(const std::string &name,const std::vector<std::string> &flags,const std::vector<std::string> &libs,const std::optional<std::string> &linker_binary_override_c=std::nullopt,const std::optional<std::string> &linker_binary_override_cpp=std::nullopt,const std::optional<std::string> &linker_binary_override_other=std::nullopt);
     
 }

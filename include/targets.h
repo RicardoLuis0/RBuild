@@ -66,6 +66,26 @@ public:
         std::optional<std::string> project_binary_override;
         std::optional<std::string> target_folder_override;
         
+        std::optional<std::string> compiler_driver_override_c;
+        std::optional<std::string> compiler_driver_override_cpp;
+        std::optional<std::string> compiler_driver_override_c_cpp;
+        std::optional<std::string> compiler_driver_override_asm;
+        std::optional<std::string> compiler_driver_override_all;
+        
+        std::optional<std::string> linker_driver_override;
+        
+        std::optional<std::string> compiler_binary_override_c;
+        std::optional<std::string> compiler_binary_override_cpp;
+        std::optional<std::string> compiler_binary_override_c_cpp;
+        std::optional<std::string> compiler_binary_override_asm;
+        std::optional<std::string> compiler_binary_override_all;
+        
+        std::optional<std::string> linker_binary_override_c;
+        std::optional<std::string> linker_binary_override_cpp;
+        std::optional<std::string> linker_binary_override_c_cpp;
+        std::optional<std::string> linker_binary_override_other;
+        std::optional<std::string> linker_binary_override_all;
+        
         bool include_only;
         
     };

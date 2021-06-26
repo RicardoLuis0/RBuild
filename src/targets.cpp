@@ -298,6 +298,22 @@ linker_order(linkorderlist_opt(tg,"linker_order",warnings_out)),
 binary_folder_override(JSON::str_opt(tg,"binary_folder_override")),
 project_binary_override(JSON::str_opt(tg,"project_binary_override")),
 target_folder_override(JSON::str_opt(tg,"target_folder_override")),
+compiler_driver_override_c(JSON::str_opt(tg,"compiler_driver_override_c")),
+compiler_driver_override_cpp(JSON::str_opt(tg,"compiler_driver_override_cpp")),
+compiler_driver_override_c_cpp(JSON::str_opt(tg,"compiler_driver_override_c_cpp")),
+compiler_driver_override_asm(JSON::str_opt(tg,"compiler_driver_override_asm")),
+compiler_driver_override_all(JSON::str_opt(tg,"compiler_driver_override_all")),
+linker_driver_override(JSON::str_opt(tg,"linker_driver_override")),
+compiler_binary_override_c(JSON::str_opt(tg,"compiler_binary_override_c")),
+compiler_binary_override_cpp(JSON::str_opt(tg,"compiler_binary_override_cpp")),
+compiler_binary_override_c_cpp(JSON::str_opt(tg,"compiler_binary_override_c_cpp")),
+compiler_binary_override_asm(JSON::str_opt(tg,"compiler_binary_override_asm")),
+compiler_binary_override_all(JSON::str_opt(tg,"compiler_binary_override_all")),
+linker_binary_override_c(JSON::str_opt(tg,"linker_binary_override_c")),
+linker_binary_override_cpp(JSON::str_opt(tg,"linker_binary_override_cpp")),
+linker_binary_override_c_cpp(JSON::str_opt(tg,"linker_binary_override_c_cpp")),
+linker_binary_override_other(JSON::str_opt(tg,"linker_binary_override_other")),
+linker_binary_override_all(JSON::str_opt(tg,"linker_binary_override_all")),
 include_only(JSON::bool_opt(tg,"include_only",false)) {
     static const std::string valid_keys[]{
         "sources",
@@ -318,6 +334,22 @@ include_only(JSON::bool_opt(tg,"include_only",false)) {
         "binary_folder_override",
         "project_binary_override",
         "target_folder_override",
+        "compiler_driver_override_c",
+        "compiler_driver_override_cpp",
+        "compiler_driver_override_c_cpp",
+        "compiler_driver_override_asm",
+        "compiler_driver_override_all",
+        "linker_driver_override",
+        "compiler_binary_override_c",
+        "compiler_binary_override_cpp",
+        "compiler_binary_override_c_cpp",
+        "compiler_binary_override_asm",
+        "compiler_binary_override_all",
+        "linker_binary_override_c",
+        "linker_binary_override_cpp",
+        "linker_binary_override_c_cpp",
+        "linker_binary_override_other",
+        "linker_binary_override_all",
         "include_only",
     };
     for(auto &e:Util::filter_exclude(Util::keys(tg),Util::CArrayIteratorAdaptor(valid_keys))){
@@ -344,6 +376,22 @@ Targets::target& Targets::target::operator+=(const target& other) {
     if(!binary_folder_override&&other.binary_folder_override)binary_folder_override=*other.binary_folder_override;
     if(!project_binary_override&&other.project_binary_override)project_binary_override=*other.project_binary_override;
     if(!target_folder_override&&other.target_folder_override)target_folder_override=*other.target_folder_override;
+    if(!compiler_driver_override_c&&other.compiler_driver_override_c)compiler_driver_override_c=*other.compiler_driver_override_c;
+    if(!compiler_driver_override_cpp&&other.compiler_driver_override_cpp)compiler_driver_override_cpp=*other.compiler_driver_override_cpp;
+    if(!compiler_driver_override_c_cpp&&other.compiler_driver_override_c_cpp)compiler_driver_override_c_cpp=*other.compiler_driver_override_c_cpp;
+    if(!compiler_driver_override_asm&&other.compiler_driver_override_asm)compiler_driver_override_asm=*other.compiler_driver_override_asm;
+    if(!compiler_driver_override_all&&other.compiler_driver_override_all)compiler_driver_override_all=*other.compiler_driver_override_all;
+    if(!linker_driver_override&&other.linker_driver_override)linker_driver_override=*other.linker_driver_override;
+    if(!compiler_binary_override_c&&other.compiler_binary_override_c)compiler_binary_override_c=*other.compiler_binary_override_c;
+    if(!compiler_binary_override_cpp&&other.compiler_binary_override_cpp)compiler_binary_override_cpp=*other.compiler_binary_override_cpp;
+    if(!compiler_binary_override_c_cpp&&other.compiler_binary_override_c_cpp)compiler_binary_override_c_cpp=*other.compiler_binary_override_c_cpp;
+    if(!compiler_binary_override_asm&&other.compiler_binary_override_asm)compiler_binary_override_asm=*other.compiler_binary_override_asm;
+    if(!compiler_binary_override_all&&other.compiler_binary_override_all)compiler_binary_override_all=*other.compiler_binary_override_all;
+    if(!linker_binary_override_c&&other.linker_binary_override_c)linker_binary_override_c=*other.linker_binary_override_c;
+    if(!linker_binary_override_cpp&&other.linker_binary_override_cpp)linker_binary_override_cpp=*other.linker_binary_override_cpp;
+    if(!linker_binary_override_c_cpp&&other.linker_binary_override_c_cpp)linker_binary_override_c_cpp=*other.linker_binary_override_c_cpp;
+    if(!linker_binary_override_other&&other.linker_binary_override_other)linker_binary_override_other=*other.linker_binary_override_other;
+    if(!linker_binary_override_all&&other.linker_binary_override_all)linker_binary_override_all=*other.linker_binary_override_all;
     return *this;
 }
 

@@ -52,6 +52,27 @@
             "binary_folder_override": optional string,
             "project_binary_override": optional string,
             "target_folder_override": optional string,
+            
+            "compiler_driver_override_c": optional enum same as "compiler_c",
+            "compiler_driver_override_cpp": optional enum same as "compiler_cpp",
+            "compiler_driver_override_c_cpp": optional enum same as "compiler_c_cpp",
+            "compiler_driver_override_asm": optional enum same as "compiler_asm",
+            "compiler_driver_override_all": optional enum same as "compiler_all",
+            
+            "linker_driver_override": optional enum same as "linker",
+            
+            "compiler_binary_override_c": optional string,
+            "compiler_binary_override_cpp": optional string,
+            "compiler_binary_override_c_cpp": optional string,
+            "compiler_binary_override_asm": optional string,
+            "compiler_binary_override_all": optional string,
+            
+            "linker_binary_override_c": optional string,
+            "linker_binary_override_cpp": optional string,
+            "linker_binary_override_c_cpp": optional string,
+            "linker_binary_override_other": optional string,
+            "linker_binary_override_all": optional string,
+            
             "include_only": optional bool default=false,
         }
     },

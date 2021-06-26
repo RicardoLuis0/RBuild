@@ -245,33 +245,67 @@ bool Project::build_target(const std::string & target_name) try{
     
     using namespace drivers;
     
-    std::unique_ptr<compiler::driver> c_compiler_driver(drivers::get_compiler(compiler_c?*compiler_c
+    std::unique_ptr<compiler::driver> c_compiler_driver(drivers::get_compiler(target.compiler_driver_override_c?*target.compiler_driver_override_c
+                                                                             :target.compiler_driver_override_c_cpp?*target.compiler_driver_override_c_cpp
+                                                                             :target.compiler_driver_override_all?*target.compiler_driver_override_all
+                                                                             :compiler_c?*compiler_c
                                                                              :compiler_c_cpp?*compiler_c_cpp
                                                                              :compiler_all?*compiler_all
-                                                                             :"gcc",
-                                                                             drivers::LANG_C,
-                                                                             Util::cat(target.flags_all,target.flags_c_cpp,target.flags_c),
-                                                                             Util::cat(target.defines_all,target.defines_c_cpp,target.defines_c)));
+                                                                             :"gcc"
+                                                                             ,drivers::LANG_C
+                                                                             ,Util::cat(target.flags_all,target.flags_c_cpp,target.flags_c)
+                                                                             ,Util::cat(target.defines_all,target.defines_c_cpp,target.defines_c)
+                                                                             ,target.compiler_binary_override_c?target.compiler_binary_override_c
+                                                                             :target.compiler_binary_override_c_cpp?target.compiler_binary_override_c_cpp
+                                                                             :target.compiler_binary_override_all?target.compiler_binary_override_all
+                                                                             :std::nullopt
+                                                                             ));
     
-    std::unique_ptr<compiler::driver> cpp_compiler_driver(drivers::get_compiler(compiler_cpp?*compiler_cpp
+    std::unique_ptr<compiler::driver> cpp_compiler_driver(drivers::get_compiler(target.compiler_driver_override_cpp?*target.compiler_driver_override_cpp
+                                                                               :target.compiler_driver_override_c_cpp?*target.compiler_driver_override_c_cpp
+                                                                               :target.compiler_driver_override_all?*target.compiler_driver_override_all
+                                                                               :compiler_cpp?*compiler_cpp
                                                                                :compiler_c_cpp?*compiler_c_cpp
                                                                                :compiler_all?*compiler_all
-                                                                               :"gcc",
-                                                                               drivers::LANG_CPP,
-                                                                               Util::cat(target.flags_all,target.flags_c_cpp,target.flags_cpp),
-                                                                               Util::cat(target.defines_all,target.defines_c_cpp,target.defines_cpp)));
+                                                                               :"gcc"
+                                                                               ,drivers::LANG_CPP
+                                                                               ,Util::cat(target.flags_all,target.flags_c_cpp,target.flags_cpp)
+                                                                               ,Util::cat(target.defines_all,target.defines_c_cpp,target.defines_cpp)
+                                                                               ,target.compiler_binary_override_cpp?target.compiler_binary_override_cpp
+                                                                               :target.compiler_binary_override_c_cpp?target.compiler_binary_override_c_cpp
+                                                                               :target.compiler_binary_override_all?target.compiler_binary_override_all
+                                                                               :std::nullopt
+                                                                               ));
     
-    std::unique_ptr<compiler::driver> asm_compiler_driver(drivers::get_compiler(compiler_asm?*compiler_asm
+    std::unique_ptr<compiler::driver> asm_compiler_driver(drivers::get_compiler(target.compiler_driver_override_asm?*target.compiler_driver_override_asm
+                                                                               :target.compiler_driver_override_all?*target.compiler_driver_override_all
+                                                                               :compiler_asm?*compiler_asm
                                                                                :compiler_all?*compiler_all
-                                                                               :"gcc",
-                                                                               drivers::LANG_ASM,
-                                                                               Util::cat(target.flags_all,target.flags_asm),
-                                                                               Util::cat(target.defines_all,target.defines_asm)));
+                                                                               :"gcc"
+                                                                               ,drivers::LANG_ASM
+                                                                               ,Util::cat(target.flags_all,target.flags_asm)
+                                                                               ,Util::cat(target.defines_all,target.defines_asm)
+                                                                               ,target.compiler_binary_override_asm?target.compiler_binary_override_asm
+                                                                               :target.compiler_binary_override_all?target.compiler_binary_override_all
+                                                                               :std::nullopt
+                                                                               ));
     
-    std::unique_ptr<linker::driver> linker_driver(drivers::get_linker(linker?*linker
-                                                 :"gcc"
-                                                 ,target.linker_flags,target.linker_libs));
-    
+    std::unique_ptr<linker::driver> linker_driver(drivers::get_linker(target.linker_driver_override?*target.linker_driver_override
+                                                                     :linker?*linker
+                                                                     :"gcc"
+                                                                     ,target.linker_flags,target.linker_libs
+                                                                     ,target.linker_binary_override_c?target.linker_binary_override_c
+                                                                     :target.linker_binary_override_c_cpp?target.linker_binary_override_c_cpp
+                                                                     :target.linker_binary_override_all?target.linker_binary_override_all
+                                                                     :std::nullopt
+                                                                     ,target.linker_binary_override_cpp?target.linker_binary_override_cpp
+                                                                     :target.linker_binary_override_c_cpp?target.linker_binary_override_c_cpp
+                                                                     :target.linker_binary_override_all?target.linker_binary_override_all
+                                                                     :std::nullopt
+                                                                     ,target.linker_binary_override_other?target.linker_binary_override_other
+                                                                     :target.linker_binary_override_all?target.linker_binary_override_all
+                                                                     :std::nullopt
+                                                                     ));
     
     std::string arch_folder(noarch?"":
     #if defined(_WIN32)

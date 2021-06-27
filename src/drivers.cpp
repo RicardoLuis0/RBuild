@@ -210,6 +210,8 @@ namespace drivers {
                 return std::make_unique<compiler::gnu>(Args::namedArgOr("gcc_override",compiler_binary_override?*compiler_binary_override:"gcc"),flags,defines);
             }else if(name=="clang"){
                 return std::make_unique<compiler::gnu>(Args::namedArgOr("clang_override",compiler_binary_override?*compiler_binary_override:"clang"),flags,defines);
+            }else if(name=="generic"&&compiler_binary_override){
+                return std::make_unique<compiler::generic>(*compiler_binary_override,flags,defines);
             }else if(name=="as"){
                 return std::make_unique<compiler::gas>(compiler_binary_override?*compiler_binary_override:name,flags,defines);
             }else if(name=="nasm"){

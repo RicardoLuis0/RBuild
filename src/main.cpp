@@ -57,6 +57,17 @@ const char * valid_args[] {
 
 int main(int argc,char ** argv) try {
     Args::init(argc,argv);
+    
+    if(Args::has_flag("version")){
+        std::cout<<"RBuild Version " RBUILD_VERSION "\n";
+        return 0;
+    }
+    
+    if(Args::has_flag("help")){
+        std::cout<<"See https://github.com/RicardoLuis0/RBuild/blob/main/README.md\n";
+        return 0;
+    }
+    
     if(Args::unnamed.size()>0&&std::filesystem::exists(Args::unnamed[0])&&std::filesystem::is_regular_file(Args::unnamed[0])){
         if(!Args::named.contains("file")){
             Args::named.insert({"file",{Args::NamedArgType::VALUE,Args::unnamed[0]}});

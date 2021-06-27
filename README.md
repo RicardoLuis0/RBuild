@@ -26,6 +26,8 @@ The command-line arguments the program accepts are:
 * `-failexit` exit at first fail
 * `-ignore_warnings` don't prompt, always continue if there are warnings
 * `-num_jobs=[num_jobs]` execute `[num_jobs]` compilations in parallel
+* `-version` display current version
+* `-help` display help message
 
 The layout for the json file is specified in [`info/json_layout.txt`](info/json_layout.txt), and the documentation for each field is at [`FORMAT.md`](FORMAT.md).
 

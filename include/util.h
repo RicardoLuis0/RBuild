@@ -23,6 +23,9 @@
 #elif defined(_WIN32)
     #define CUR_PLATFORM "windows"
 #endif
+
+#define RBUILD_VERSION "0.0.0a"
+
 inline std::string operator"" _s(const char * s,size_t n){
     return {s,n};
 }

@@ -29,9 +29,9 @@ then
     
     if [ $use_gcc_10 == 1 ]
     then
-        RBuild --gcc_override=gcc-10 --gxx_override=g++-10 --file=RBuild.json release
+        RBuild --gcc_override=gcc-10 --gxx_override=g++-10 --file=RBuild.json "$@"
     else
-        RBuild --file=RBuild.json release
+        RBuild --file=RBuild.json "$@"
     fi
     
 else

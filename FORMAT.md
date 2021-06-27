@@ -35,6 +35,8 @@ Currently supported linkers are:
 `src_folder`: **REUQIRED only if sources are in a different folder than cwd**  
 `noarch`: if true don't separate built files per architecture, default false  
 `targets_default`: default target or default targets, the targets that will be built if no targets are specified in the command-line, default `all`
+`compiler_binary_override_c`,`compiler_binary_override_cpp`,`compiler_binary_override_c_cpp`,`compiler_binary_override_asm`,`compiler_binary_override_all`: change the binary that is executed when calling the compiler
+`linker_binary_override_c`,`linker_binary_override_cpp`,`linker_binary_override_c_cpp`,`linker_binary_override_other`,`linker_binary_override_all`: change the binary that is executed when calling the linker
 
 ## Target Properties
 

@@ -12,6 +12,19 @@
     "compiler_cpp": optional string enum "clang" "gcc" default="gcc",
     "compiler_asm": optional string enum "clang" "gcc" "as" "nasm" default="gcc",
     "linker": required string enum "clang" "gcc" "ld" "ld.gold" "ld.lld" "ar" "llvm-ar" default="gcc",
+    
+    "compiler_binary_override_c": optional string,
+    "compiler_binary_override_cpp": optional string,
+    "compiler_binary_override_c_cpp": optional string,
+    "compiler_binary_override_asm": optional string,
+    "compiler_binary_override_all": optional string,
+    
+    "linker_binary_override_c": optional string,
+    "linker_binary_override_cpp": optional string,
+    "linker_binary_override_c_cpp": optional string,
+    "linker_binary_override_other": optional string,
+    "linker_binary_override_all": optional string,
+    
     "targets_default": optional string | array [ string ] default="all",
     "targets": required object {
         string: required object {

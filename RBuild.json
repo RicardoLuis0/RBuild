@@ -48,7 +48,6 @@
                 "-Wmain",
                 "-Wall",
                 "-Werror=return-type",
-                "-Werror=suggest-override",
             ],
             "flags_c":[
                 "-std=c2x"
@@ -59,7 +58,8 @@
                 "-Wnon-virtual-dtor",
                 "-Wpessimizing-move",
                 "-Wold-style-cast",
-                "-Wredundant-move"
+                "-Wredundant-move",
+                "-Werror=suggest-override",
             ],
             "include_only":true
         },

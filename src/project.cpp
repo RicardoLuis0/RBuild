@@ -20,6 +20,16 @@ Project::Project(const JSON::object_t &project,std::vector<std::string> &warning
     project_binary(JSON::str_nonopt(project,"project_binary")),
     project_ext(JSON::str_opt(project,"project_ext")),
     binary_folder_override(JSON::str_opt(project,"binary_folder_override")),
+    compiler_binary_override_c(JSON::str_opt(project,"compiler_binary_override_c")),
+    compiler_binary_override_cpp(JSON::str_opt(project,"compiler_binary_override_cpp")),
+    compiler_binary_override_c_cpp(JSON::str_opt(project,"compiler_binary_override_c_cpp")),
+    compiler_binary_override_asm(JSON::str_opt(project,"compiler_binary_override_asm")),
+    compiler_binary_override_all(JSON::str_opt(project,"compiler_binary_override_all")),
+    linker_binary_override_c(JSON::str_opt(project,"linker_binary_override_c")),
+    linker_binary_override_cpp(JSON::str_opt(project,"linker_binary_override_cpp")),
+    linker_binary_override_c_cpp(JSON::str_opt(project,"linker_binary_override_c_cpp")),
+    linker_binary_override_other(JSON::str_opt(project,"linker_binary_override_other")),
+    linker_binary_override_all(JSON::str_opt(project,"linker_binary_override_all")),
     noarch(JSON::bool_opt(project,"noarch",false))
 {
     if(auto it=project.find("targets_default");it!=project.end()){
@@ -64,6 +74,16 @@ Project::Project(const JSON::object_t &project,std::vector<std::string> &warning
         "linker",
         "noarch",
         "binary_folder_override",
+        "compiler_binary_override_c",
+        "compiler_binary_override_cpp",
+        "compiler_binary_override_c_cpp",
+        "compiler_binary_override_asm",
+        "compiler_binary_override_all",
+        "linker_binary_override_c",
+        "linker_binary_override_cpp",
+        "linker_binary_override_c_cpp",
+        "linker_binary_override_other",
+        "linker_binary_override_all",
     };
     for(auto &e:Util::filter_exclude(Util::keys(project),Util::CArrayIteratorAdaptor(valid_keys))){
         warnings_out.push_back("Ignored Unknown Element "+Util::quote_str_single(e));
@@ -258,6 +278,9 @@ bool Project::build_target(const std::string & target_name) try{
                                                                              ,target.compiler_binary_override_c?target.compiler_binary_override_c
                                                                              :target.compiler_binary_override_c_cpp?target.compiler_binary_override_c_cpp
                                                                              :target.compiler_binary_override_all?target.compiler_binary_override_all
+                                                                             :compiler_binary_override_c?compiler_binary_override_c
+                                                                             :compiler_binary_override_c_cpp?compiler_binary_override_c_cpp
+                                                                             :compiler_binary_override_all?compiler_binary_override_all
                                                                              :std::nullopt
                                                                              ));
     
@@ -274,6 +297,9 @@ bool Project::build_target(const std::string & target_name) try{
                                                                                ,target.compiler_binary_override_cpp?target.compiler_binary_override_cpp
                                                                                :target.compiler_binary_override_c_cpp?target.compiler_binary_override_c_cpp
                                                                                :target.compiler_binary_override_all?target.compiler_binary_override_all
+                                                                               :compiler_binary_override_cpp?compiler_binary_override_cpp
+                                                                               :compiler_binary_override_c_cpp?compiler_binary_override_c_cpp
+                                                                               :compiler_binary_override_all?compiler_binary_override_all
                                                                                :std::nullopt
                                                                                ));
     
@@ -287,6 +313,8 @@ bool Project::build_target(const std::string & target_name) try{
                                                                                ,Util::cat(target.defines_all,target.defines_asm)
                                                                                ,target.compiler_binary_override_asm?target.compiler_binary_override_asm
                                                                                :target.compiler_binary_override_all?target.compiler_binary_override_all
+                                                                               :compiler_binary_override_asm?compiler_binary_override_asm
+                                                                               :compiler_binary_override_all?compiler_binary_override_all
                                                                                :std::nullopt
                                                                                ));
     
@@ -297,13 +325,21 @@ bool Project::build_target(const std::string & target_name) try{
                                                                      ,target.linker_binary_override_c?target.linker_binary_override_c
                                                                      :target.linker_binary_override_c_cpp?target.linker_binary_override_c_cpp
                                                                      :target.linker_binary_override_all?target.linker_binary_override_all
+                                                                     :linker_binary_override_c?linker_binary_override_c
+                                                                     :linker_binary_override_c_cpp?linker_binary_override_c_cpp
+                                                                     :linker_binary_override_all?linker_binary_override_all
                                                                      :std::nullopt
                                                                      ,target.linker_binary_override_cpp?target.linker_binary_override_cpp
                                                                      :target.linker_binary_override_c_cpp?target.linker_binary_override_c_cpp
                                                                      :target.linker_binary_override_all?target.linker_binary_override_all
+                                                                     :linker_binary_override_cpp?linker_binary_override_cpp
+                                                                     :linker_binary_override_c_cpp?linker_binary_override_c_cpp
+                                                                     :linker_binary_override_all?linker_binary_override_all
                                                                      :std::nullopt
                                                                      ,target.linker_binary_override_other?target.linker_binary_override_other
                                                                      :target.linker_binary_override_all?target.linker_binary_override_all
+                                                                     :linker_binary_override_other?linker_binary_override_other
+                                                                     :linker_binary_override_all?linker_binary_override_all
                                                                      :std::nullopt
                                                                      ));
     

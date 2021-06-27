@@ -200,6 +200,8 @@ namespace drivers {
                 return std::make_unique<compiler::gnu>((lang==LANG_C?Args::namedArgOr("gcc_override",compiler_binary_override?*compiler_binary_override:"gcc"):Args::namedArgOr("gxx_override",compiler_binary_override?*compiler_binary_override:"g++")),flags,defines);
             }else if(name=="clang"){
                 return std::make_unique<compiler::gnu>((lang==LANG_C?Args::namedArgOr("clang_override",compiler_binary_override?*compiler_binary_override:"clang"):Args::namedArgOr("clangxx_override",compiler_binary_override?*compiler_binary_override:"clang++")),flags,defines);
+            }else if(name=="generic"&&compiler_binary_override){
+                return std::make_unique<compiler::generic>(*compiler_binary_override,flags,defines);
             }else{
                 throw std::runtime_error("unknown compiler "+Util::quote_str_single(name));
             }
@@ -229,6 +231,8 @@ namespace drivers {
             return std::make_unique<linker::gnu>(Args::namedArgOr("gcc_override",linker_binary_override_c?*linker_binary_override_c:"gcc"),Args::namedArgOr("gxx_override",linker_binary_override_cpp?*linker_binary_override_cpp:"g++"),flags,libs);
         }else if(name=="clang"){
             return std::make_unique<linker::gnu>(Args::namedArgOr("clang_override",linker_binary_override_c?*linker_binary_override_c:"clang"),Args::namedArgOr("clangxx_override",linker_binary_override_cpp?*linker_binary_override_cpp:"clang++"),flags,libs);
+        }else if(name=="generic"&&linker_binary_override_other){
+            return std::make_unique<linker::generic>(*linker_binary_override_other,flags,libs);
         }else if(Util::contains(std::vector<std::string>{"ld","ld.gold","ld.lld"},name)){
             return std::make_unique<linker::generic>(linker_binary_override_other?*linker_binary_override_other:name,flags,libs);
         }else if(Util::contains(std::vector<std::string>{"ar","llvm-ar"},name)){

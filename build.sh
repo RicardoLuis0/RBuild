@@ -34,6 +34,14 @@ then
         RBuild --file=RBuild.json "$@"
     fi
     
+else if command -v ./build/lin/release/RBuild &> /dev/null
+then
+    if [ $use_gcc_10 == 1 ]
+    then
+        ./build/lin/release/RBuild --gcc_override=gcc-10 --gxx_override=g++-10 --file=RBuild.json "$@"
+    else
+        ./build/lin/release/RBuild --file=RBuild.json "$@"
+    fi
 else
     
     if [ $use_gcc_10 == 1 ]

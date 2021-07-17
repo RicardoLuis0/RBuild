@@ -34,7 +34,7 @@ then
         RBuild --file=RBuild.json "$@"
     fi
     
-else if command -v ./build/lin/release/RBuild &> /dev/null
+elif command -v ./build/lin/release/RBuild &> /dev/null
 then
     if [ $use_gcc_10 == 1 ]
     then

@@ -1,56 +1,84 @@
 #!/usr/bin/env bash
-gcc_version=$(gcc --version | awk '/gcc/{print $NF}')
 
-if [ ${gcc_version%%.*} -lt 10 ]
-then
-    if command -v gcc-10 &> /dev/null
-    then
-        if command -v g++-10 &> /dev/null
-        then
-            use_gcc_10=1
+set -eu -o pipefail
+
+function find_compatible_gxx_ver(){
+    min_req=$1
+    default_gcc_version=$(g++ --version | awk '/g\+\+/{print $NF}')
+    if [ ${default_gcc_version%%.*} -lt $min_req ]; then
+        avail_vers=($(compgen -c g++- | grep -oP "(?<=g\+\+-)[0-9]+"))
+        if [ ${#avail_vers[@]} -gt 0 ]; then
+            max=${avail_vers[0]}
+            for ver in ${avail_vers[@]}
+            do
+                if [ $ver -gt $max ]; then
+                    max=$ver
+                fi
+            done
+            if [ $max -ge $min_req ]; then
+                echo "g++-$max"
+            else
+                echo "NO VALID G++ VERSION FOUND, MINIMUM REQUIRED: $min_req , MAXIMUM FOUND: $max"
+                return 1
+            fi
         else
-            echo DEFAULT GCC TOO OLD, FOUND GCC-10, MISSING G++-10
-            exit 1
+            echo "NO G++ VERSIONS FOUND"
+            return 1
         fi
-    elif command -v g++-10 &> /dev/null
-    then
-        echo DEFAULT GCC TOO OLD, MISSING GCC-10, FOUND G++-10
-        exit 1
     else
-        echo DEFAULT GCC TOO OLD, MISSING GCC-10, MISSING G++-10
+        echo "g++"
+    fi
+}
+
+function find_compatible_gcc_ver(){
+    min_req=$1
+    default_gcc_version=$(gcc --version | awk '/gcc/{print $NF}')
+    if [ ${default_gcc_version%%.*} -lt $min_req ]; then
+        avail_vers=($(compgen -c gcc- | grep -oP "(?<=gcc-)[0-9]+"))
+        if [ ${#avail_vers[@]} -gt 0 ]; then
+            max=${avail_vers[0]}
+            for ver in ${avail_vers[@]}
+            do
+                if [ $ver -gt $max ]; then
+                    max=$ver
+                fi
+            done
+            if [ $max -ge $min_req ]; then
+                echo "gcc-$max"
+            else
+                echo "NO VALID GCC VERSION FOUND, MINIMUM REQUIRED: $min_req , MAXIMUM FOUND: $max"
+                return 1
+            fi
+        else
+            echo "NO GCC VERSIONS FOUND"
+            return 1
+        fi
+    else
+        echo "gcc"
+    fi
+}
+
+if gcc=$(find_compatible_gcc_ver 10)
+then
+    if gxx=$(find_compatible_gxx_ver 10)
+    then
+        :
+    else
+        echo "$gxx"
         exit 1
     fi
 else
-    use_gcc_10=0
+    echo "$gcc"
+    exit 1
 fi
 
 if command -v RBuild &> /dev/null
 then
-    
-    if [ $use_gcc_10 == 1 ]
-    then
-        RBuild --gcc_override=gcc-10 --gxx_override=g++-10 --file=RBuild.json "$@"
-    else
-        RBuild --file=RBuild.json "$@"
-    fi
-    
+    RBuild --gcc_override=$gcc --gxx_override=$gxx --file=RBuild.json "$@"
 elif command -v ./build/lin/release/bin/RBuild &> /dev/null
 then
-    if [ $use_gcc_10 == 1 ]
-    then
-        ./build/lin/release/bin/RBuild --gcc_override=gcc-10 --gxx_override=g++-10 --file=RBuild.json "$@"
-    else
-        ./build/lin/release/bin/RBuild --file=RBuild.json "$@"
-    fi
+    ./build/lin/release/bin/RBuild --gcc_override=$gcc --gxx_override=$gxx --file=RBuild.json "$@"
 else
-    
-    if [ $use_gcc_10 == 1 ]
-    then
-        gxx="g++-10"
-    else
-        gxx="g++"
-    fi
-    
     echo Cannot find RBuild in path, using fallback build command
 
     echo Building release...
@@ -62,7 +90,6 @@ else
     else
         echo Release build failed
     fi
-    
 fi
 
 echo run ./install.sh to add to path or upgrade

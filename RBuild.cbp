@@ -59,6 +59,7 @@
 		<Unit filename="include/drivers.h" />
 		<Unit filename="include/json.h" />
 		<Unit filename="include/project.h" />
+		<Unit filename="include/run.h" />
 		<Unit filename="include/targets.h" />
 		<Unit filename="include/util.h" />
 		<Unit filename="src/args.cpp" />
@@ -66,6 +67,7 @@
 		<Unit filename="src/json.cpp" />
 		<Unit filename="src/main.cpp" />
 		<Unit filename="src/project.cpp" />
+		<Unit filename="src/run.cpp" />
 		<Unit filename="src/targets.cpp" />
 		<Unit filename="src/util.cpp" />
 		<Extensions />

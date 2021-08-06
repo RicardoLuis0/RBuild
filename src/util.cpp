@@ -4,8 +4,6 @@
 #include <fstream>
 #include <cerrno>
 #include <cstring>
-#include <cstdlib>
-#include <memory>
 #include <mutex>
 
 namespace Util {

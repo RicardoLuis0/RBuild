@@ -74,7 +74,7 @@ namespace Util {
     
     std::string join(const std::vector<std::string> &v,const std::string &on=" ");
     
-    std::string join_or(const std::vector<std::string> &v,const std::string &sep_comma=", ",const std::string &sep_or=" or ");
+    std::string join_or(const std::vector<std::string> &v,const std::string &sep_comma=", ",const std::string &sep_or=", or ");
     
     std::vector<std::string> split(const std::string &str,char split_on,bool split_empty=false);
     std::vector<std::string> split(const std::string &str,const std::vector<char> &split_on,bool split_empty=false);
@@ -101,6 +101,16 @@ namespace Util {
     
     template<std::ranges::input_range R,std::invocable<typename R::value_type> Fn_T>
     std::vector<typename std::invoke_result<Fn_T,typename R::value_type>::type> map(const R &r,const Fn_T &f) {
+        std::vector<typename std::invoke_result<Fn_T,typename R::value_type>::type> v;
+        v.reserve(std::size(r));
+        for(const auto &e:r){
+            v.emplace_back(std::invoke(f,e));
+        }
+        return v;
+    }
+    
+    template<std::ranges::input_range R,std::invocable<typename R::value_type> Fn_T>
+    std::vector<typename std::invoke_result<Fn_T,typename R::value_type>::type> map_copy(const R &r,const Fn_T &f) {
         std::vector<typename std::invoke_result<Fn_T,typename R::value_type>::type> v;
         v.reserve(std::size(r));
         for(const auto &e:r){
@@ -228,7 +238,7 @@ namespace Util {
     }
     
     template<std::ranges::input_range Ra,std::ranges::input_range ... Rb>
-    std::vector<typename Ra::value_type> cat(const Ra &ra,const Rb & ... rb) requires (std::convertible_to<typename Ra::value_type,typename Rb::value_type>&&...) {
+    std::vector<typename Ra::value_type> merge(const Ra &ra,const Rb & ... rb) requires (std::convertible_to<typename Ra::value_type,typename Rb::value_type>&&...) {
         std::vector<typename Ra::value_type> o(std::begin(ra),std::end(ra));
         o.reserve(std::size(ra)+(std::size(rb)+...));
         (std::copy(std::begin(rb),std::end(rb),std::back_inserter(o)),...);
@@ -236,8 +246,7 @@ namespace Util {
     }
     
     inline std::string str_tolower(std::string s){
-        inplace_map(s,&tolower);
-        return s;
+        return inplace_map(s,&tolower);
     }
     
     template<typename T,size_t N>
@@ -355,4 +364,58 @@ namespace Util {
         
     };
     
+    constexpr size_t conststr_len(const char * s){
+        size_t i=0;
+        for(;s[i];i++);
+        return i;
+    }
+    
+    constexpr bool conststr_eq(const char * a,const char * b){
+        for(size_t i=0;a[i]&&b[i];i++){
+            if(a[i]!=b[i])return false;
+        }
+        return true;
+    }
+    
+    constexpr int conststr_find_first(const char * str,char c,size_t n){
+        for(size_t i=0;i<n&&str[i];i++){
+            if(str[i]==c)return i;
+        }
+        return -1;
+    }
+    
+    constexpr int conststr_find_first(const char * str,char c){
+        for(size_t i=0;str[i];i++){
+            if(str[i]==c)return i;
+        }
+        return -1;
+    }
+    
+    constexpr int conststr_to_int(const char * str,size_t n){
+        int v=0;
+        bool neg=str[0]=='-';
+        size_t i=(str[0]=='-'||str[0]=='+')?1:0;
+        for(;i<n&&str[i]>='0'&&str[i]<='9';i++){
+            v*=10;
+            v+=str[i]-'0';
+        }
+        return neg?-v:v;
+    }
+    
+    constexpr int conststr_to_int(const char * str){
+        int v=0;
+        bool neg=str[0]=='-';
+        size_t i=(str[0]=='-'||str[0]=='+')?1:0;
+        for(;str[i]>='0'&&str[i]<='9';i++){
+            v*=10;
+            v+=str[i]-'0';
+        }
+        return neg?-v:v;
+    }
+    
+    template<size_t N,typename T>
+    constexpr size_t arr_len(T (&)[N]){
+        return N;
+    }
 }
+

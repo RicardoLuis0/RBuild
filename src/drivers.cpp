@@ -40,7 +40,7 @@ namespace drivers {
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
             if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");//std::cout<<std::filesystem::relative(file_in).string()<<"\n";
-            return Util::run(compiler,Util::cat(std::vector<std::string>{file_in.string(),"-o",file_out.string()},flags,defines_calc,extra_flags),nullptr,silent,rd)==0;
+            return Util::run(compiler,Util::merge(std::vector<std::string>{file_in.string(),"-o",file_out.string()},flags,defines_calc,extra_flags),nullptr,silent,rd)==0;
         }
         
         bool generic::compile(const path &working_path,const path &src_base,const path &file_in,const path &file_out,const std::vector<std::string> &extra_flags,Util::redirect_data * rd){
@@ -48,7 +48,7 @@ namespace drivers {
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
             if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");;//std::cout<<std::filesystem::relative(file_in).string()<<"\n";
-            return Util::run(compiler,Util::cat(std::vector<std::string>{"-c",file_in.string(),"-o",file_out.string()},flags,defines_calc,extra_flags),&Util::alternate_cmdline_args_to_file_regular,silent,rd)==0;
+            return Util::run(compiler,Util::merge(std::vector<std::string>{"-c",file_in.string(),"-o",file_out.string()},flags,defines_calc,extra_flags),&Util::alternate_cmdline_args_to_file_regular,silent,rd)==0;
         }
         
         path gnu::get_dpath(const path &working_path,const path &src_base,const path &src_file){
@@ -97,7 +97,7 @@ namespace drivers {
         bool gnu::compile(const path &working_path,const path &src_base,const path &file_in,const path &file_out,const std::vector<std::string> &extra_args,Util::redirect_data * rd){
             const path dpath=get_dpath(working_path,src_base,file_in);
             std::filesystem::create_directories(std::filesystem::path(dpath).remove_filename());
-            return generic::compile(working_path,src_base,file_in,file_out,Util::cat(std::vector<std::string>{INCLUDE_CHECK,"-MF"+dpath.string()},extra_args),rd);
+            return generic::compile(working_path,src_base,file_in,file_out,Util::merge(std::vector<std::string>{INCLUDE_CHECK,"-MF"+dpath.string()},extra_args),rd);
         }
         
         void gas::calc_defines(){
@@ -109,7 +109,7 @@ namespace drivers {
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
             if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");//std::cout<<std::filesystem::relative(file_in).string()<<"\n";
-            return Util::run(compiler,Util::cat(std::vector<std::string>{file_in.string(),"-o",file_out.string()},flags,defines_calc,extra_flags),&Util::alternate_cmdline_args_to_file_regular,silent,rd)==0;
+            return Util::run(compiler,Util::merge(std::vector<std::string>{file_in.string(),"-o",file_out.string()},flags,defines_calc,extra_flags),&Util::alternate_cmdline_args_to_file_regular,silent,rd)==0;
         }
         
         bool nasm::compile(const path &working_path,const path &src_base,const path &file_in,const path &file_out,const std::vector<std::string> &extra_flags,Util::redirect_data * rd){
@@ -119,7 +119,7 @@ namespace drivers {
             std::filesystem::create_directories(std::filesystem::path(dpath).remove_filename());
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
             if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");//std::cout<<std::filesystem::relative(file_in).string()<<"\n";
-            return Util::run(compiler,Util::cat(std::vector<std::string>{file_in.string(),"-o",file_out.string()},flags,defines_calc,std::vector<std::string>{INCLUDE_CHECK,"-MF"+dpath.string()},extra_flags),&Util::alternate_cmdline_args_to_file_nasm,silent,rd)==0;
+            return Util::run(compiler,Util::merge(std::vector<std::string>{file_in.string(),"-o",file_out.string()},flags,defines_calc,std::vector<std::string>{INCLUDE_CHECK,"-MF"+dpath.string()},extra_flags),&Util::alternate_cmdline_args_to_file_nasm,silent,rd)==0;
         }
         
     }
@@ -156,7 +156,7 @@ namespace drivers {
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
             if(silent)std::cout<<"linking\n";
-            return Util::run(linker,Util::cat(std::vector<std::string>{"-o",file_out.string()},libs,flags,extra_flags,join_link_files()),nullptr,silent)==0;
+            return Util::run(linker,Util::merge(std::vector<std::string>{"-o",file_out.string()},libs,flags,extra_flags,join_link_files()),nullptr,silent)==0;
         }
         
         std::string base::get_ext(){
@@ -174,7 +174,7 @@ namespace drivers {
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
             if(silent)std::cout<<"linking\n";
-            return Util::run(linker,Util::cat(std::vector<std::string>{"-o",file_out.string()},flags,extra_flags,join_link_files(),libs),&Util::alternate_cmdline_args_to_file_regular,silent)==0;
+            return Util::run(linker,Util::merge(std::vector<std::string>{"-o",file_out.string()},flags,extra_flags,join_link_files(),libs),&Util::alternate_cmdline_args_to_file_regular,silent)==0;
         }
         
         gnu::gnu(const std::string &lnk,const std::string &lnk_cpp,const std::vector<std::string> &fs,const std::vector<std::string> &ls) : generic(lnk,fs,ls),linker_cpp(lnk_cpp) {
@@ -197,7 +197,7 @@ namespace drivers {
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
             if(silent)std::cout<<"linking\n";
-            return Util::run(linker,Util::cat(flags,std::vector<std::string>{file_out.string()},libs,extra_flags,join_link_files()),&Util::alternate_cmdline_args_to_file_regular,silent)==0;
+            return Util::run(linker,Util::merge(flags,std::vector<std::string>{file_out.string()},libs,extra_flags,join_link_files()),&Util::alternate_cmdline_args_to_file_regular,silent)==0;
         }
         
     }

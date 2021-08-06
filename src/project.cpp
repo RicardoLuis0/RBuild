@@ -273,8 +273,8 @@ bool Project::build_target(const std::string & target_name) try{
                                                                              :compiler_all?*compiler_all
                                                                              :"gcc"
                                                                              ,drivers::LANG_C
-                                                                             ,Util::cat(target.flags_all,target.flags_c_cpp,target.flags_c)
-                                                                             ,Util::cat(target.defines_all,target.defines_c_cpp,target.defines_c)
+                                                                             ,Util::merge(target.flags_all,target.flags_c_cpp,target.flags_c)
+                                                                             ,Util::merge(target.defines_all,target.defines_c_cpp,target.defines_c)
                                                                              ,target.compiler_binary_override_c?target.compiler_binary_override_c
                                                                              :target.compiler_binary_override_c_cpp?target.compiler_binary_override_c_cpp
                                                                              :target.compiler_binary_override_all?target.compiler_binary_override_all
@@ -292,8 +292,8 @@ bool Project::build_target(const std::string & target_name) try{
                                                                                :compiler_all?*compiler_all
                                                                                :"gcc"
                                                                                ,drivers::LANG_CPP
-                                                                               ,Util::cat(target.flags_all,target.flags_c_cpp,target.flags_cpp)
-                                                                               ,Util::cat(target.defines_all,target.defines_c_cpp,target.defines_cpp)
+                                                                               ,Util::merge(target.flags_all,target.flags_c_cpp,target.flags_cpp)
+                                                                               ,Util::merge(target.defines_all,target.defines_c_cpp,target.defines_cpp)
                                                                                ,target.compiler_binary_override_cpp?target.compiler_binary_override_cpp
                                                                                :target.compiler_binary_override_c_cpp?target.compiler_binary_override_c_cpp
                                                                                :target.compiler_binary_override_all?target.compiler_binary_override_all
@@ -309,8 +309,8 @@ bool Project::build_target(const std::string & target_name) try{
                                                                                :compiler_all?*compiler_all
                                                                                :"gcc"
                                                                                ,drivers::LANG_ASM
-                                                                               ,Util::cat(target.flags_all,target.flags_asm)
-                                                                               ,Util::cat(target.defines_all,target.defines_asm)
+                                                                               ,Util::merge(target.flags_all,target.flags_asm)
+                                                                               ,Util::merge(target.defines_all,target.defines_asm)
                                                                                ,target.compiler_binary_override_asm?target.compiler_binary_override_asm
                                                                                :target.compiler_binary_override_all?target.compiler_binary_override_all
                                                                                :compiler_binary_override_asm?compiler_binary_override_asm

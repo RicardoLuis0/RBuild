@@ -39,7 +39,7 @@ namespace drivers {
             calc_defines();
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
-            if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");//std::cout<<std::filesystem::relative(file_in).string()<<"\n";
+            if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");
             return Util::run(compiler,Util::merge(std::vector<std::string>{file_in.string(),"-o",file_out.string()},flags,defines_calc,extra_flags),nullptr,silent,rd)==0;
         }
         
@@ -47,7 +47,7 @@ namespace drivers {
             calc_defines();
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
-            if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");;//std::cout<<std::filesystem::relative(file_in).string()<<"\n";
+            if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");
             return Util::run(compiler,Util::merge(std::vector<std::string>{"-c",file_in.string(),"-o",file_out.string()},flags,defines_calc,extra_flags),&Util::alternate_cmdline_args_to_file_regular,silent,rd)==0;
         }
         
@@ -108,7 +108,7 @@ namespace drivers {
             calc_defines();
             static bool silent=!Args::has_flag("verbose");
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
-            if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");//std::cout<<std::filesystem::relative(file_in).string()<<"\n";
+            if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");
             return Util::run(compiler,Util::merge(std::vector<std::string>{file_in.string(),"-o",file_out.string()},flags,defines_calc,extra_flags),&Util::alternate_cmdline_args_to_file_regular,silent,rd)==0;
         }
         
@@ -118,8 +118,8 @@ namespace drivers {
             const path dpath=get_dpath(working_path,src_base,file_in);
             std::filesystem::create_directories(std::filesystem::path(dpath).remove_filename());
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
-            if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");//std::cout<<std::filesystem::relative(file_in).string()<<"\n";
-            return Util::run(compiler,Util::merge(std::vector<std::string>{file_in.string(),"-o",file_out.string()},flags,defines_calc,std::vector<std::string>{INCLUDE_CHECK,"-MF"+dpath.string()},extra_flags),&Util::alternate_cmdline_args_to_file_nasm,silent,rd)==0;
+            if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");
+            return Util::run(compiler,Util::merge(std::vector<std::string>{file_in.string(),"-o",file_out.string()},flags,defines_calc,std::vector<std::string>{INCLUDE_CHECK,"-MF",dpath.string()},extra_flags),&Util::alternate_cmdline_args_to_file_nasm,silent,rd)==0;
         }
         
     }

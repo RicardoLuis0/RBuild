@@ -11,6 +11,7 @@ namespace drivers {
     
     namespace compiler {
         
+        extern std::string include_check;
         extern bool filetime_nocache;
         
         class driver {

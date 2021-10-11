@@ -6,19 +6,10 @@
 
 using std::filesystem::path;
 
-#ifndef INCLUDE_CHECK_INCLUDE_SYSTEM
-#define INCLUDE_CHECK_INCLUDE_SYSTEM 1
-#endif // INCLUDE_CHECK_INCLUDE_SYSTEM
-
-#if INCLUDE_CHECK_INCLUDE_SYSTEM
-    #define INCLUDE_CHECK "-MD"
-#else
-    #define INCLUDE_CHECK "-MMD"
-#endif // INCLUDE_CHECK_INCLUDE_SYSTEM
-
 namespace drivers {
     namespace compiler {
         
+        std::string include_check;
         bool filetime_nocache;
         
         driver::~driver(){
@@ -113,7 +104,7 @@ namespace drivers {
         bool gnu::compile(const path &working_path,const path &src_base,const path &file_in,const path &file_out,const std::vector<std::string> &extra_args,Util::redirect_data * rd){
             const path dpath=get_dpath(working_path,src_base,file_in);
             std::filesystem::create_directories(std::filesystem::path(dpath).remove_filename());
-            return generic::compile(working_path,src_base,file_in,file_out,Util::merge(std::vector<std::string>{INCLUDE_CHECK,"-MF"+dpath.string()},extra_args),rd);
+            return generic::compile(working_path,src_base,file_in,file_out,Util::merge(std::vector<std::string>{include_check,"-MF"+dpath.string()},extra_args),rd);
         }
         
         void gas::calc_defines(){
@@ -135,7 +126,7 @@ namespace drivers {
             std::filesystem::create_directories(std::filesystem::path(dpath).remove_filename());
             std::filesystem::create_directories(std::filesystem::path(file_out).remove_filename());
             if(silent) Util::print_sync(std::filesystem::relative(file_in).string()+"\n");
-            return Util::run(compiler,Util::merge(std::vector<std::string>{file_in.string(),"-o",file_out.string()},flags,defines_calc,std::vector<std::string>{INCLUDE_CHECK,"-MF",dpath.string()},extra_flags),&Util::alternate_cmdline_args_to_file_nasm,silent,rd)==0;
+            return Util::run(compiler,Util::merge(std::vector<std::string>{file_in.string(),"-o",file_out.string()},flags,defines_calc,std::vector<std::string>{include_check,"-MF",dpath.string()},extra_flags),&Util::alternate_cmdline_args_to_file_nasm,silent,rd)==0;
         }
         
     }

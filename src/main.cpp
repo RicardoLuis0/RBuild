@@ -54,6 +54,8 @@ const char * valid_args[] {
     "num_jobs",
     "ignore_warnings",
     "filetime_nocache",
+    "incremental_build_exclude_system",
+    "MMD",
 };
 
 int main(int argc,char ** argv) try {
@@ -78,6 +80,12 @@ int main(int argc,char ** argv) try {
     
     if(Args::has_flag("filetime_nocache")){
         drivers::compiler::filetime_nocache=true;
+    }
+    
+    if(Args::has_flag("incremental_build_exclude_system")||Args::has_flag("MMD")){
+        drivers::compiler::include_check="-MMD";
+    }else{
+        drivers::compiler::include_check="-MD";
     }
     
     std::vector<std::string> warnings;

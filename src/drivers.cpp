@@ -19,6 +19,8 @@ using std::filesystem::path;
 namespace drivers {
     namespace compiler {
         
+        bool filetime_nocache;
+        
         driver::~driver(){
             
         }
@@ -67,13 +69,27 @@ namespace drivers {
             }
         }
         
+        static std::map<path,std::filesystem::file_time_type> filetime_cache;
+        
+        static std::filesystem::file_time_type get_cached_file_write_time(const path& file){
+            if(filetime_nocache){
+                return std::filesystem::last_write_time(file);
+            }else if(auto it=filetime_cache.find(file);it!=filetime_cache.end()){
+                return it->second;
+            }else{
+                auto time=std::filesystem::last_write_time(file);
+                filetime_cache.insert({file,time});
+                return time;
+            }
+        }
+        
         bool gnu::needs_compile(const path &working_path,const path &src_base,const path &file_in,const path &file_out) try {
             static bool rebuild=Args::has_flag("rebuild");
             path dfile=get_dpath(working_path,src_base,file_in);
             if(!std::filesystem::exists(dfile)||rebuild)return true;
-            auto ctime=std::filesystem::last_write_time(file_out);
+            auto ctime=get_cached_file_write_time(file_out);
             
-            if(std::filesystem::last_write_time(file_in)>ctime)return true;
+            if(get_cached_file_write_time(file_in)>ctime)return true;
             
             std::vector<path> files(({
                 std::string data=Util::readfile(dfile.string());
@@ -85,7 +101,7 @@ namespace drivers {
             }));
             
             for(auto &p:files){
-                if(std::filesystem::last_write_time(p)>ctime){
+                if(get_cached_file_write_time(p)>ctime){
                     return true;
                 }
             }

@@ -11,6 +11,8 @@ namespace drivers {
     
     namespace compiler {
         
+        extern bool filetime_nocache;
+        
         class driver {
         public:
             virtual ~driver()=0;

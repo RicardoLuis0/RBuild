@@ -53,6 +53,7 @@ const char * valid_args[] {
     "failexit",
     "num_jobs",
     "ignore_warnings",
+    "filetime_nocache",
 };
 
 int main(int argc,char ** argv) try {
@@ -73,6 +74,10 @@ int main(int argc,char ** argv) try {
             Args::named.insert({"file",{Args::NamedArgType::VALUE,Args::unnamed[0]}});
         }
         Args::unnamed.erase(Args::unnamed.begin());
+    }
+    
+    if(Args::has_flag("filetime_nocache")){
+        drivers::compiler::filetime_nocache=true;
     }
     
     std::vector<std::string> warnings;

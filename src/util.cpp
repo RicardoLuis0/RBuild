@@ -6,6 +6,13 @@
 #include <cstring>
 #include <mutex>
 
+#ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+#elif defined(__unix__)
+    #include <unistd.h>
+#endif
+
 namespace Util {
     namespace {
         constexpr char escape(char c){
@@ -34,6 +41,18 @@ namespace Util {
                 return c;
             }
         }
+    }
+    
+    int numCPUs(){
+        #ifdef _WIN32
+            SYSTEM_INFO si={};
+            GetSystemInfo(&si);
+            return si.dwNumberOfProcessors;
+        #elif defined(_SC_NPROCESSORS_ONLN)
+            return sysconf(_SC_NPROCESSORS_ONLN);
+        #else
+            return 4;//fallback
+        #endif // _WIN32
     }
     
     std::string quote_str(const std::string &s,char quote_char){

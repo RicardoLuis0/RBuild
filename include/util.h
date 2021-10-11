@@ -13,9 +13,11 @@
     #define CUR_PLATFORM "linux"
 #elif defined(_WIN32)
     #define CUR_PLATFORM "windows"
+#else
+    #define CUR_PLATFORM "unknown"
 #endif
 
-#define RBUILD_VERSION "0.0.0c"
+#define RBUILD_VERSION "0.0.0d"
 
 inline std::string operator"" _s(const char * s,size_t n){
     return {s,n};
@@ -34,6 +36,8 @@ constexpr unsigned long long int operator"" _G(unsigned long long int n){
 }
 
 namespace Util {
+    
+    int numCPUs();
     
     std::string readfile(const std::string &filename);
     void writefile(const std::string &filename,const std::string &data);

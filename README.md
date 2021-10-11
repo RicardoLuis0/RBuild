@@ -25,7 +25,7 @@ The command-line arguments the program accepts are:
 * `-clangxx_override=[compiler]` use specified compiler instead of `clang++`
 * `-failexit` exit at first fail
 * `-ignore_warnings` don't prompt, always continue if there are warnings
-* `-num_jobs=[num_jobs]` execute `[num_jobs]` compilations in parallel
+* `-num_jobs=[num_jobs]` execute `[num_jobs]` compilations in parallel, use `auto` to perform as many parallel compilation as there are processors in the system
 * `-version` display current version
 * `-help` display help message
 * `-filetime_nocache` don't cache file write times

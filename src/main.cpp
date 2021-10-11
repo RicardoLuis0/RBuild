@@ -91,7 +91,8 @@ int main(int argc,char ** argv) try {
     std::vector<std::string> warnings;
     
     try{
-        num_jobs=Args::namedIntArgOr("num_jobs",0,false);
+        std::optional<int> njopt=Args::namedIntArgOrMatchStr("num_jobs",0,"auto",false);
+        num_jobs=njopt?*njopt:Util::numCPUs();
     }catch(std::exception &e){
         warnings.push_back(std::string(e.what())+", Argument Ignored");
     }

@@ -15,7 +15,7 @@
     #define CUR_PLATFORM "windows"
 #endif
 
-#define RBUILD_VERSION "0.0.0b"
+#define RBUILD_VERSION "0.0.0c"
 
 inline std::string operator"" _s(const char * s,size_t n){
     return {s,n};

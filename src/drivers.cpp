@@ -133,12 +133,16 @@ namespace drivers {
     
     namespace linker {
         
+        bool force_static_link;
+        
         driver::~driver(){
             
         }
         
         base::base(const std::string &lnk,const std::vector<std::string> &fs,const std::vector<std::string> &ls):linker(lnk),flags(fs),libs(ls){
-            
+            if(force_static_link){
+                flags.push_back("-static");
+            }
         }
         
         void base::add_file(ssize_t link_order,const path &file){

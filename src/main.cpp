@@ -33,7 +33,7 @@ static bool show_warnings(std::vector<std::string> &warnings){
                     return false;
                 }
             }
-        } else {
+        }else{
             std::cout<<"Warning: Warning Prompt Skipped ('ignore_warnings' flag)\n";
         }
     }
@@ -56,6 +56,7 @@ const char * valid_args[] {
     "filetime_nocache",
     "incremental_build_exclude_system",
     "MMD",
+    "static",
 };
 
 int main(int argc,char ** argv) try {
@@ -80,6 +81,10 @@ int main(int argc,char ** argv) try {
     
     if(Args::has_flag("filetime_nocache")){
         drivers::compiler::filetime_nocache=true;
+    }
+    
+    if(Args::has_flag("static")){
+        drivers::linker::force_static_link=true;
     }
     
     if(Args::has_flag("incremental_build_exclude_system")||Args::has_flag("MMD")){

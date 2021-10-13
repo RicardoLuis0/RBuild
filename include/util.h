@@ -17,7 +17,7 @@
     #define CUR_PLATFORM "unknown"
 #endif
 
-#define RBUILD_VERSION "0.0.0d"
+#define RBUILD_VERSION "0.0.0e"
 
 inline std::string operator"" _s(const char * s,size_t n){
     return {s,n};

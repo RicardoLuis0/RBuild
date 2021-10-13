@@ -68,6 +68,8 @@ namespace drivers {
     
     namespace linker {
         
+        extern bool force_static_link;
+        
         class driver {
         public:
             virtual ~driver()=0;

@@ -15,7 +15,9 @@
         },
         "linux_common":{
             "linker_libs":[
+                "-Wl,--whole-archive",
                 "-lpthread",
+                "-Wl,--no-whole-archive",
             ],
             "include_only":true
         },

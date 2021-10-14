@@ -31,6 +31,7 @@ The command-line arguments the program accepts are:
 * `-filetime_nocache` don't cache file write times
 * `-incremental_build_exclude_system` or `-MMD` to exclude system headers when generating dependency files
 * `-static` link program statically ( may not work depending on which libraries are used, which linker is used, and how the project's json file is structured )
+* `-clean` remove `obj/` and `tmp/`, requiring next build to be a full rebuild
 
 The layout for the json file is specified in [`info/json_layout.txt`](info/json_layout.txt), and the documentation for each field is at [`FORMAT.md`](FORMAT.md).
 

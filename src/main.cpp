@@ -9,6 +9,8 @@
 
 #include <cstdlib>
 
+#define RBUILD_VERSION "0.0.0f"
+
 static bool show_warnings(std::vector<std::string> &warnings){
     bool show_prompt=true;
     try {
@@ -57,6 +59,7 @@ const char * valid_args[] {
     "incremental_build_exclude_system",
     "MMD",
     "static",
+    "clean",
 };
 
 int main(int argc,char ** argv) try {
@@ -145,9 +148,27 @@ int main(int argc,char ** argv) try {
             return EXIT_FAILURE;
         }
     }
+    
+    const bool do_clean=Args::has_flag("clean");
+    const bool failexit=Args::has_flag("failexit");
+    
     bool fail=false;
+    
     if(valid_targets.size()==0){
         std::cout<<"----------------\nNo Targets\n----------------\n";
+    }else if(do_clean){
+        for(auto &target : valid_targets){
+            std::cout<<"----------------\nCleaning target "<<Util::quote_str_single(target)<<(project.name?(" in "+Util::quote_str_single(*project.name)):"")<<"\n----------------\n";
+            try{
+                project.clean_target(target);
+            }catch(std::exception &e){
+                std::cout<<"\n\nCleaning target "<<Util::quote_str_single(target)<<" failed: "<<e.what()<<"!\n\n\n";
+                if(failexit){
+                    return EXIT_FAILURE;
+                }
+                fail=true;
+            }
+        }
     }else{
         for(auto &target : valid_targets){
             std::cout<<"----------------\nBuilding target "<<Util::quote_str_single(target)<<(project.name?(" in "+Util::quote_str_single(*project.name)):"")<<"\n----------------\n";
@@ -156,14 +177,14 @@ int main(int argc,char ** argv) try {
                     std::cout<<"\n\nBuilt target "<<Util::quote_str_single(target)<<" successfully!\n\n\n";
                 }else{
                     std::cout<<"\n\nBuilding target "<<Util::quote_str_single(target)<<" failed!\n\n\n";
-                    if(Args::has_flag("failexit")){
+                    if(failexit){
                         return EXIT_FAILURE;
                     }
                     fail=true;
                 }
             }catch(std::exception &e){
                 std::cout<<"\n\nBuilding target "<<Util::quote_str_single(target)<<" failed: "<<e.what()<<"!\n\n\n";
-                if(Args::has_flag("failexit")){
+                if(failexit){
                     return EXIT_FAILURE;
                 }
                 fail=true;

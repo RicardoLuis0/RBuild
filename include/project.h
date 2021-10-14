@@ -40,6 +40,7 @@ public:
     
     Project(const JSON::object_t &project,std::vector<std::string> &warnings_out);
     bool build_target(const std::string &);
+    void clean_target(const std::string &);
 protected:
 
 private:

@@ -258,6 +258,23 @@ namespace {
     };
 }
 
+static const char * arch_folder(
+#if defined(_WIN32)
+    "win"
+#elif defined(__linux__)
+    "lin"
+#elif defined(__unix__)
+    "nix"
+#else
+    #warning unknown architecture
+    "unknown"
+#endif
+);
+
+static std::filesystem::path get_working_path(Targets::target &target,bool noarch,std::filesystem::path working_folder,std::string target_name){
+    return (noarch?working_folder:(working_folder/arch_folder))/(target.target_folder_override?*target.target_folder_override:target_name);
+}
+
 bool Project::build_target(const std::string & target_name) try{
     using std::filesystem::path;
     
@@ -343,20 +360,9 @@ bool Project::build_target(const std::string & target_name) try{
                                                                      :std::nullopt
                                                                      ));
     
-    std::string arch_folder(noarch?"":
-    #if defined(_WIN32)
-        "win"
-    #elif defined(__linux__)
-        "lin"
-    #else
-        #warning unknown architecture
-        "unknown"
-    #endif // defined
-    );
-    
     path src_base=src_path.empty()?std::filesystem::current_path():path(src_path);
-    path wf_path=path(working_folder)/arch_folder;
-    path out_base=wf_path/"obj";
+    path working_path=get_working_path(target,noarch,working_folder,target_name);
+    path out_base=working_path/"obj";
     std::vector<path> sources_all;
     gather_sources(sources_all,src_base,target.sources);
     
@@ -385,8 +391,6 @@ bool Project::build_target(const std::string & target_name) try{
         std::vector<path> sources_cpp(FILTER_EXTENSIONS(cpp_extensions));
         std::vector<path> sources_asm(FILTER_EXTENSIONS(asm_extensions));
     #undef FILTER_EXTENSIONS
-    
-    path working_path(wf_path/(target.target_folder_override?*target.target_folder_override:target_name));
     
     for(const Targets::target::link_order_t &lo_entry:target.linker_order){
         if(lo_entry.type==Targets::target::LINK_EXTRA){
@@ -493,4 +497,20 @@ bool Project::build_target(const std::string & target_name) try{
     return true;
 }catch(std::out_of_range &e){
     throw std::runtime_error("Invalid target "+Util::quote_str_single(target_name));
+}
+
+void Project::clean_target(const std::string &target_name){
+    using std::filesystem::path;
+    
+    auto &target=targets.targets.at(target_name);
+    
+    path working_path=get_working_path(target,noarch,working_folder,target_name);
+    
+    path obj_path(working_path/"obj");
+    path tmp_path(working_path/"tmp");
+    
+    std::cout<<"Deleting "<<std::filesystem::relative(obj_path)<<"\n";
+    std::filesystem::remove_all(obj_path);
+    std::cout<<"Deleting "<<std::filesystem::relative(tmp_path)<<"\n";
+    std::filesystem::remove_all(tmp_path);
 }

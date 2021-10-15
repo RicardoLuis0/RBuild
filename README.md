@@ -19,7 +19,7 @@ The command-line arguments the program accepts are:
 | ARGUMENT                                      | DESCRIPTION                                                                                                                                           |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `-help`                                       | display help message                                                                                                                                  |
-| `-file=[json file]`                           | to specify which file it uses as the project file, if no file is specified it uses "[current folder name].json"                                       |
+| `-file=[json file]`                           | specify which file it uses as the project file, if no file is specified it uses "[current folder name].json"                                          |
 | `-rebuild`                                    | rebuild project from scratch, ignore already-built object files                                                                                       |
 | `-verbose`                                    | print whole command line of executed compilers/linkers                                                                                                |
 | `-gcc_override=[compiler]`                    | use specified compiler instead of `gcc`                                                                                                               |
@@ -31,7 +31,7 @@ The command-line arguments the program accepts are:
 | `-num_jobs=[num_jobs]`                        | execute `[num_jobs]` compilations in parallel, use `auto` to perform as many parallel compilation as there are processors in the system               |
 | `-version`                                    | display current version                                                                                                                               |
 | `-filetime_nocache`                           | don't cache file write times                                                                                                                          |
-| `-incremental_build_exclude_system` , `‑MMD`  | to exclude system headers when generating dependency files                                                                                            |
+| `-incremental_build_exclude_system` , `‑MMD`  | exclude system headers when generating dependency files                                                                                               |
 | `-static`                                     | link program statically ( may not work depending on which libraries are used, which linker is used, and how the project's json file is structured )   |
 | `-clean`                                      | remove `obj/` and `tmp/`, requiring next build to be a full rebuild                                                                                   |
 

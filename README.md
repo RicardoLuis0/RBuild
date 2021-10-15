@@ -16,22 +16,24 @@ It does support:
 ## Using
 
 The command-line arguments the program accepts are:
-* `-file=[json file]` to specify which file it uses as the project file, if no file is specified it uses "[current folder name].json"
-* `-rebuild` rebuild project from scratch, ignore already-built object files
-* `-verbose` print whole command line of executed compilers/linkers
-* `-gcc_override=[compiler]` use specified compiler instead of `gcc`
-* `-gxx_override=[compiler]` use specified compiler instead of `g++`
-* `-clang_override=[compiler]` use specified compiler instead of `clang`
-* `-clangxx_override=[compiler]` use specified compiler instead of `clang++`
-* `-failexit` exit at first fail
-* `-ignore_warnings` don't prompt, always continue if there are warnings
-* `-num_jobs=[num_jobs]` execute `[num_jobs]` compilations in parallel, use `auto` to perform as many parallel compilation as there are processors in the system
-* `-version` display current version
-* `-help` display help message
-* `-filetime_nocache` don't cache file write times
-* `-incremental_build_exclude_system` or `-MMD` to exclude system headers when generating dependency files
-* `-static` link program statically ( may not work depending on which libraries are used, which linker is used, and how the project's json file is structured )
-* `-clean` remove `obj/` and `tmp/`, requiring next build to be a full rebuild
+| ARGUMENT                                      | DESCRIPTION                                                                                                                                           |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-help`                                       | display help message                                                                                                                                  |
+| `-file=[json file]`                           | to specify which file it uses as the project file, if no file is specified it uses "[current folder name].json"                                       |
+| `-rebuild`                                    | rebuild project from scratch, ignore already-built object files                                                                                       |
+| `-verbose`                                    | print whole command line of executed compilers/linkers                                                                                                |
+| `-gcc_override=[compiler]`                    | use specified compiler instead of `gcc`                                                                                                               |
+| `-gxx_override=[compiler]`                    | use specified compiler instead of `g++`                                                                                                               |
+| `-clang_override=[compiler]`                  | use specified compiler instead of `clang`                                                                                                             |
+| `-clangxx_override=[compiler]`                | use specified compiler instead of `clang++`                                                                                                           |
+| `-failexit`                                   | exit at first fail                                                                                                                                    |
+| `-ignore_warnings`                            | don't prompt, always continue if there are warnings                                                                                                   |
+| `-num_jobs=[num_jobs]`                        | execute `[num_jobs]` compilations in parallel, use `auto` to perform as many parallel compilation as there are processors in the system               |
+| `-version`                                    | display current version                                                                                                                               |
+| `-filetime_nocache`                           | don't cache file write times                                                                                                                          |
+| `-incremental_build_exclude_system` , `-MMD`  | to exclude system headers when generating dependency files                                                                                            |
+| `-static`                                     | link program statically ( may not work depending on which libraries are used, which linker is used, and how the project's json file is structured )   |
+| `-clean`                                      | remove `obj/` and `tmp/`, requiring next build to be a full rebuild                                                                                   |
 
 The layout for the json file is specified in [`info/json_layout.txt`](info/json_layout.txt), and the documentation for each field is at [`FORMAT.md`](FORMAT.md).
 

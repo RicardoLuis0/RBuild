@@ -84,7 +84,7 @@ else
     echo Building release...
     
     mkdir -p build/lin/release/bin
-    if $gxx src/args.cpp src/json.cpp src/main.cpp src/project.cpp src/targets.cpp src/util.cpp src/drivers.cpp -Iinclude -Werror=return-type -Werror=suggest-override -std=c++20 -fexceptions -O2 -lpthread -s -o build/lin/release/bin/RBuild
+    if $gxx src/args.cpp src/json.cpp src/main.cpp src/project.cpp src/targets.cpp src/util.cpp src/drivers.cpp src/run.cpp -Iinclude -Werror=return-type -Werror=suggest-override -std=c++20 -fexceptions -O2 -lpthread -s -o build/lin/release/bin/RBuild
     then
         echo Release build successful
     else

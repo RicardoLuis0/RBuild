@@ -85,10 +85,8 @@ Example:
 ```json
 "targets":[
     "my_target_01":{
-        //...
     },
     "my_target_02":{
-        //...
     },
     "my_target_group":{
         "target_group":[

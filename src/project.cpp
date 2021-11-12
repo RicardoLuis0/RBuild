@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <thread>
 #include <queue>
+#include <unordered_set>
 
 Project::Project(const JSON::object_t &project,std::vector<std::string> &warnings_out) :
     targets(project.at("targets").get_obj(),warnings_out),
@@ -37,7 +38,7 @@ Project::Project(const JSON::object_t &project,std::vector<std::string> &warning
             auto &s=it->second.get_str();
             if(s=="all"){
                 default_targets=Util::keys(targets.targets);
-            }else if(targets.targets.contains(s)){
+            }else if(targets.targets.contains(s)||targets.target_groups.contains(s)){
                 default_targets={s};
             }else{
                 warnings_out.push_back("Invalid Target in 'targets_default': "+Util::quote_str_single(s));
@@ -45,7 +46,7 @@ Project::Project(const JSON::object_t &project,std::vector<std::string> &warning
         }else if(it->second.is_arr()){
             default_targets=JSON::mkstrlist(it->second.get_arr());
             std::vector<std::string> invalid_targets;
-            std::tie(default_targets,invalid_targets)=Util::filter_inout(default_targets,Util::keys(targets.targets));
+            std::tie(default_targets,invalid_targets)=Util::filter_inout(default_targets,Util::merge(Util::keys(targets.targets),Util::keys(targets.target_groups)));
             if(invalid_targets.size()>0){
                 warnings_out.push_back("Invalid "+
                                        std::string(invalid_targets.size()==1?"Target":"Targets")+
@@ -273,6 +274,77 @@ static const char * arch_folder(
 
 static std::filesystem::path get_working_path(Targets::target &target,bool noarch,std::filesystem::path working_folder,std::string target_name){
     return (noarch?working_folder:(working_folder/arch_folder))/(target.target_folder_override?*target.target_folder_override:target_name);
+}
+
+
+std::vector<std::string> Project::resolve_target_groups(const std::vector<std::string> &target_names){
+    std::unordered_set<std::string> target_group_memory;
+    
+    std::vector<std::string> out;
+    
+    std::vector<std::string> p1(target_names);
+    std::vector<std::string> p2;
+    
+    for(std::vector<std::string> *pending=&p1,*pending_new=&p2;
+        !pending->empty();
+        pending->clear(),std::swap(pending,pending_new)
+    ){
+        for(const std::string& target:*pending){
+            if(!target_group_memory.contains(target)){
+                if(auto it=targets.target_groups.find(target);it!=targets.target_groups.end()){
+                    pending_new->insert(pending_new->end(),it->second.begin(),it->second.end());
+                    target_group_memory.insert(target);//prevent target group direct/indirect recursion
+                }else{
+                    out.push_back(target);
+                }
+            }
+        }
+    }
+    return out;
+}
+
+bool Project::build_targets(const std::vector<std::string> &target_names,bool failexit){
+    std::vector<std::string> ts(resolve_target_groups(target_names));
+    bool fail=false;
+    for(const std::string &t:ts){
+        std::cout<<"----------------\nBuilding target "<<Util::quote_str_single(t)<<(name?(" in "+Util::quote_str_single(*name)):"")<<"\n----------------\n";
+        try{
+            if(build_target(t)){
+                std::cout<<"\n\nBuilt target "<<Util::quote_str_single(t)<<" successfully!\n\n\n";
+            }else{
+                std::cout<<"\n\nBuilding target "<<Util::quote_str_single(t)<<" failed!\n\n\n";
+                if(failexit){
+                    return false;
+                }
+                fail=true;
+            }
+        }catch(std::exception &e){
+            std::cout<<"\n\nBuilding target "<<Util::quote_str_single(t)<<" failed: "<<e.what()<<"!\n\n\n";
+            if(failexit){
+                return false;
+            }
+            fail=true;
+        }
+    }
+    return !fail;
+}
+
+bool Project::clean_targets(const std::vector<std::string> &target_names,bool failexit){
+    std::vector<std::string> ts(resolve_target_groups(target_names));
+    bool fail=false;
+    for(const std::string &t:ts){
+        std::cout<<"----------------\nCleaning target "<<Util::quote_str_single(t)<<(name?(" in "+Util::quote_str_single(*name)):"")<<"\n----------------\n";
+        try{
+            clean_target(t);
+        }catch(std::exception &e){
+            std::cout<<"\n\nCleaning target "<<Util::quote_str_single(t)<<" failed: "<<e.what()<<"!\n\n\n";
+            if(failexit){
+                return false;
+            }
+            fail=true;
+        }
+    }
+    return !fail;
 }
 
 bool Project::build_target(const std::string & target_name) try{

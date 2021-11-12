@@ -11,7 +11,7 @@
             "linker_libs":[
                 "-lrpcrt4",
             ],
-            "include_only":true
+            "include_only":true,
         },
         "linux_common":{
             "linker_libs":[
@@ -19,7 +19,7 @@
                 "-lpthread",
                 "-Wl,--no-whole-archive",
             ],
-            "include_only":true
+            "include_only":true,
         },
         "common":{
             "include":[
@@ -52,7 +52,7 @@
                 "-Werror=return-type",
             ],
             "flags_c":[
-                "-std=c2x"
+                "-std=c2x",
             ],
             "flags_cpp":[
                 "-std=c++20",
@@ -63,7 +63,7 @@
                 "-Wredundant-move",
                 "-Werror=suggest-override",
             ],
-            "include_only":true
+            "include_only":true,
         },
         "release":{
             "include":[
@@ -77,7 +77,7 @@
             ],
             "linker_flags":[
                 "-s"
-            ]
+            ],
         },
         "debug":{
             "include":[
@@ -88,8 +88,8 @@
             ],
             "flags_c_cpp":[
                 "-g"
-            ]
+            ],
         },
     },
-    "targets_default":"release"
+    "targets_default":"release",
 }

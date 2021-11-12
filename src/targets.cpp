@@ -315,7 +315,7 @@ linker_binary_override_c_cpp(JSON::str_opt(tg,"linker_binary_override_c_cpp")),
 linker_binary_override_other(JSON::str_opt(tg,"linker_binary_override_other")),
 linker_binary_override_all(JSON::str_opt(tg,"linker_binary_override_all")),
 include_only(JSON::bool_opt(tg,"include_only",false)) {
-    static const std::string valid_keys[]{
+    static const char * valid_keys[]{
         "sources",
         "include",
         "defines_all",
@@ -439,13 +439,38 @@ void Targets::process_includes(std::vector<std::string> &warnings_out){
     }
 }
 
+const char * target_group_valid_keys [] {
+    "target_group",
+};
+
 Targets::Targets(const JSON::object_t &targets_obj,std::vector<std::string> &warnings_out) {
+    bool tg=false;
     for(const auto & t:targets_obj) try {
+        tg=false;
         std::vector<std::string> target_warnings;
-        targets.insert({t.first,{t.second.get_obj(),t.first,target_warnings}});
-        Util::extract_warnings(std::move(Util::inplace_map(target_warnings,[&t](const std::string &s)->std::string{return "In target "+Util::quote_str_single(t.first)+": "+s;})),warnings_out);
+        auto &tobj=t.second.get_obj();
+        if(tobj.contains("target_group")){
+            tg=true;
+            for(auto &e:Util::filter_exclude(Util::keys(tobj),Util::CArrayIteratorAdaptor(target_group_valid_keys))){
+                target_warnings.push_back("Ignored Unknown Element "+Util::quote_str_single(e));
+            }
+            target_groups.insert({t.first,JSON::strlist_nonopt(tobj,"target_group")});
+        }else{
+            targets.insert({t.first,{tobj,t.first,target_warnings}});
+        }
+        Util::extract_warnings(std::move(Util::inplace_map(target_warnings,[&t,tg](const std::string &s)->std::string{return (tg?"In Target group ":"In Target ")+Util::quote_str_single(t.first)+": "+s;})),warnings_out);
     } catch(JSON::JSON_Exception &e) {
-        throw JSON::JSON_Exception("In target "+Util::quote_str_single(t.first)+": "+e.msg_top);
+        throw JSON::JSON_Exception((tg?"In Target group ":"In Target ")+Util::quote_str_single(t.first)+": "+e.msg_top);
     }
     process_includes(warnings_out);
+    for(auto group:target_groups){
+        group.second.erase(std::remove_if(group.second.begin(),group.second.end(),[this,&group,&warnings_out](const std::string &t){
+            if(!targets.contains(t)&&!target_groups.contains(t)){
+                warnings_out.push_back("Ignored Unknown Target "+Util::quote_str_single(t)+" In Target group "+Util::quote_str_single(group.first));
+                return true;
+            }else{
+                return false;
+            }
+        }));
+    }
 }

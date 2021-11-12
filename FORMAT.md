@@ -27,16 +27,17 @@ Currently supported linkers are:
 
 ### Misc Project Properties
 
-`project_name`: The name that will be shown when building  
-`working_folder`: **REQUIRED** The folder where the build files will be stored.  
-`project_binary`: **REQUIRED** Output binary for the project, without extension  
-`binary_folder_override`: Override output folder for binary (from `working_folder\arch\target\bin`) to this  
-`project_ext`: Override extension (from `.exe` on windows and empty on linux) to this  
-`src_folder`: **REUQIRED only if sources are in a different folder than cwd**  
-`noarch`: if true don't separate built files per architecture, default false  
-`targets_default`: default target or default targets, the targets that will be built if no targets are specified in the command-line, default `all`
-`compiler_binary_override_c`,`compiler_binary_override_cpp`,`compiler_binary_override_c_cpp`,`compiler_binary_override_asm`,`compiler_binary_override_all`: change the binary that is executed when calling the compiler
-`linker_binary_override_c`,`linker_binary_override_cpp`,`linker_binary_override_c_cpp`,`linker_binary_override_other`,`linker_binary_override_all`: change the binary that is executed when calling the linker
+* `project_name`: The name that will be shown when building
+* `targets`: List of the targets for the project
+* `working_folder`: **REQUIRED** The folder where the build files will be stored.
+* `project_binary`: **REQUIRED** Output binary for the project, without extension
+* `binary_folder_override`: Override output folder for binary (from `working_folder\arch\target\bin`) to this
+* `project_ext`: Override extension (from `.exe` on windows and empty on linux) to this
+* `src_folder`: **REUQIRED only if sources are in a different folder than cwd**
+* `noarch`: if true don't separate built files per architecture, default false
+* `targets_default`: default target or default targets, the targets that will be built if no targets are specified in the command-line, default `all`
+* `compiler_binary_override_c`,`compiler_binary_override_cpp`,`compiler_binary_override_c_cpp`,`compiler_binary_override_asm`,`compiler_binary_override_all`: change the binary that is executed when calling the compiler
+* `linker_binary_override_c`,`linker_binary_override_cpp`,`linker_binary_override_c_cpp`,`linker_binary_override_other`,`linker_binary_override_all`: change the binary that is executed when calling the linker
 
 ## Target Properties
 
@@ -76,6 +77,27 @@ Example:
 ]
 ```
 
+### Grouping Targets
+
+A target group can be specified instead of a target in `targets` by using the `target_group` property, which is a list of the names of targets/other target groups which are included by the group.
+
+Example:
+```json
+"targets":[
+    "my_target_01":{
+        //...
+    },
+    "my_target_02":{
+        //...
+    },
+    "my_target_group":{
+        "target_group":[
+            "my_target_01",
+            "my_target_02",
+        ]
+    }
+]
+```
 
 ### Compiler Properties
 

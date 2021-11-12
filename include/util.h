@@ -84,11 +84,8 @@ namespace Util {
     std::vector<std::string> split_str(const std::string &str,const std::vector<std::string> &split_on,bool split_empty=false);
     
     template<std::ranges::input_range R>
-    bool contains(const R &r,const typename R::value_type &v) requires std::equality_comparable<typename R::value_type>{ //O(n)
-        for(const auto &e:r){
-            if(e==v)return true;
-        }
-        return false;
+    bool contains(const R &r,const typename R::value_type &v) requires std::equality_comparable<typename R::value_type>{
+        return std::ranges::find(r,v)!=r.end();
     }
     
     template<std::ranges::input_range Ra,std::ranges::input_range Rb>

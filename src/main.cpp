@@ -9,7 +9,7 @@
 
 #include <cstdlib>
 
-#define RBUILD_VERSION "0.0.0f"
+#define RBUILD_VERSION "0.0.0g"
 
 static bool show_warnings(std::vector<std::string> &warnings){
     bool show_prompt=true;
@@ -117,7 +117,18 @@ int main(int argc,char ** argv) try {
         }
     }
     
-    std::vector<std::string> possible_targets=Util::keys(project.targets.targets);
+    std::vector<std::string> possible_targets=Util::merge(Util::keys(project.targets.targets),Util::keys(project.targets.target_groups));
+    
+    bool target_group_all_exists=!project.targets.target_groups.insert_or_assign("all",Util::keys(project.targets.targets)).second;
+    
+    if(target_group_all_exists||project.targets.targets.contains("all")){
+        warnings.push_back(std::string(target_group_all_exists?"Target group":"Target")+" 'all' was defined by project, and overwritten (project must not define 'all' target)");
+        if(!target_group_all_exists){
+            project.targets.targets.erase("all");
+        }
+    }else{
+        possible_targets.push_back("all");
+    }
     
     std::vector<std::string> valid_targets;
     
@@ -127,11 +138,6 @@ int main(int argc,char ** argv) try {
         }
         std::cout<<"targets: "<<Util::join(Util::map(possible_targets,&Util::quote_str_single),", ")<<"\n";
         return EXIT_SUCCESS;
-    }else if(Args::unnamed.size()==1&&Args::unnamed[0]=="all"){
-        if(!show_warnings(warnings)){
-            return EXIT_FAILURE;
-        }
-        valid_targets=possible_targets;
     }else if(Args::unnamed.size()==0){
         if(!show_warnings(warnings)){
             return EXIT_FAILURE;
@@ -151,47 +157,15 @@ int main(int argc,char ** argv) try {
     
     const bool do_clean=Args::has_flag("clean");
     const bool failexit=Args::has_flag("failexit");
-    
-    bool fail=false;
-    
+    bool ok=true;
     if(valid_targets.size()==0){
         std::cout<<"----------------\nNo Targets\n----------------\n";
     }else if(do_clean){
-        for(auto &target : valid_targets){
-            std::cout<<"----------------\nCleaning target "<<Util::quote_str_single(target)<<(project.name?(" in "+Util::quote_str_single(*project.name)):"")<<"\n----------------\n";
-            try{
-                project.clean_target(target);
-            }catch(std::exception &e){
-                std::cout<<"\n\nCleaning target "<<Util::quote_str_single(target)<<" failed: "<<e.what()<<"!\n\n\n";
-                if(failexit){
-                    return EXIT_FAILURE;
-                }
-                fail=true;
-            }
-        }
+        ok=project.clean_targets(valid_targets,failexit);
     }else{
-        for(auto &target : valid_targets){
-            std::cout<<"----------------\nBuilding target "<<Util::quote_str_single(target)<<(project.name?(" in "+Util::quote_str_single(*project.name)):"")<<"\n----------------\n";
-            try{
-                if(project.build_target(target)){
-                    std::cout<<"\n\nBuilt target "<<Util::quote_str_single(target)<<" successfully!\n\n\n";
-                }else{
-                    std::cout<<"\n\nBuilding target "<<Util::quote_str_single(target)<<" failed!\n\n\n";
-                    if(failexit){
-                        return EXIT_FAILURE;
-                    }
-                    fail=true;
-                }
-            }catch(std::exception &e){
-                std::cout<<"\n\nBuilding target "<<Util::quote_str_single(target)<<" failed: "<<e.what()<<"!\n\n\n";
-                if(failexit){
-                    return EXIT_FAILURE;
-                }
-                fail=true;
-            }
-        }
+        ok=project.build_targets(valid_targets,failexit);
     }
-    return fail?EXIT_FAILURE:EXIT_SUCCESS;
+    return ok?EXIT_SUCCESS:EXIT_FAILURE;
 } catch(std::exception &e) {
     std::cerr<<"Unexpected Exception: "<<e.what()<<"\n";
     return EXIT_FAILURE;

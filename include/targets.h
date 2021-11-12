@@ -91,6 +91,7 @@ public:
     };
     
     std::map<std::string,target> targets;
+    std::map<std::string,std::vector<std::string>> target_groups;
     
     Targets(const JSON::object_t &targets,std::vector<std::string> &warnings_out);
     

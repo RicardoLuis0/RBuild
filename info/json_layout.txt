@@ -87,6 +87,8 @@
             "linker_binary_override_all": optional string,
             
             "include_only": optional bool default=false,
+        } | object {
+            "target_group": required array [ string ],
         }
     },
 }

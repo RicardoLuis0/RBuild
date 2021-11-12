@@ -6,6 +6,7 @@
 extern int num_jobs;
 
 class Project {
+    std::vector<std::string> resolve_target_groups(const std::vector<std::string> &);
 public:
     Targets targets;
     std::vector<std::string> default_targets;
@@ -39,9 +40,9 @@ public:
     bool noarch;
     
     Project(const JSON::object_t &project,std::vector<std::string> &warnings_out);
+    
+    bool build_targets(const std::vector<std::string> &,bool failexit);
     bool build_target(const std::string &);
+    bool clean_targets(const std::vector<std::string> &,bool failexit);
     void clean_target(const std::string &);
-protected:
-
-private:
 };

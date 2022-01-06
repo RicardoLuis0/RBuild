@@ -122,10 +122,10 @@ It has 3 types:
 
 ### Misc Target Properties
 
-`include_only`: will not allow the target to be compiled by itself, only included by other targets  
-`binary_folder_override`: override output folder for binary (from `working_folder\arch\target\bin`) to this for target  
-`project_binary_override`: override `project_binary` property for the target
-`target_folder_override`: override the folder where the target's output files (obj/bin/etc) will be stored, if the folder is already another target, don't forget to specify `project_binary_override` to prevent overwriting the output executable
-`compiler_driver_override_c`,`compiler_driver_override_cpp`,`compiler_driver_override_asm`,`compiler_driver_override_all`,`linker_driver_override`: override project's compiler/linker properties
-`compiler_binary_override_c`,`compiler_binary_override_cpp`,`compiler_binary_override_c_cpp`,`compiler_binary_override_asm`,`compiler_binary_override_all`: change the binary that is executed when calling the compiler
-`linker_binary_override_c`,`linker_binary_override_cpp`,`linker_binary_override_c_cpp`,`linker_binary_override_other`,`linker_binary_override_all`: change the binary that is executed when calling the linker
+* `include_only`: will not allow the target to be compiled by itself, only included by other targets  
+* `binary_folder_override`: override output folder for binary (from `working_folder\arch\target\bin`) to this for target  
+* `project_binary_override`: override `project_binary` property for the target
+* `target_folder_override`: override the folder where the target's output files (obj/bin/etc) will be stored, if the folder is already another target, don't forget to specify `project_binary_override` to prevent overwriting the output executable
+* `compiler_driver_override_c`,`compiler_driver_override_cpp`,`compiler_driver_override_asm`,`compiler_driver_override_all`,`linker_driver_override`: override project's compiler/linker properties
+* `compiler_binary_override_c`,`compiler_binary_override_cpp`,`compiler_binary_override_c_cpp`,`compiler_binary_override_asm`,`compiler_binary_override_all`: change the binary that is executed when calling the compiler
+* `linker_binary_override_c`,`linker_binary_override_cpp`,`linker_binary_override_c_cpp`,`linker_binary_override_other`,`linker_binary_override_all`: change the binary that is executed when calling the linker
